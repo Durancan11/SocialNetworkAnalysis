@@ -1,5 +1,6 @@
 package com.socialnetwork.socialnetworkanalysis;
 
+import com.socialnetwork.socialnetworkanalysis.controller.DataManager; // YENİ: Bunu ekledik
 import com.socialnetwork.socialnetworkanalysis.model.Graph;
 import com.socialnetwork.socialnetworkanalysis.model.Node;
 import com.socialnetwork.socialnetworkanalysis.view.GraphView;
@@ -35,6 +36,13 @@ public class Main extends Application {
         // 2. Görünümü (Canvas) Hazırla
         GraphView graphView = new GraphView(800, 600);
         graphView.drawGraph(graph); // Grafı çizdir!
+
+        // --- YENİ EKLENEN KISIM (KAYIT TESTİ) ---
+        // Pencere açılmadan hemen önce verileri kaydediyoruz
+        System.out.println("Veriler kaydediliyor...");
+        DataManager dataManager = new DataManager();
+        dataManager.saveGraph(graph, "."); // "." nokta, şu anki klasör demektir
+        // ----------------------------------------
 
         // 3. Pencere Düzeni
         BorderPane root = new BorderPane();
