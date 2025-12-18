@@ -68,6 +68,15 @@ public class Main extends Application {
         dijkstra.execute(graph, n1); // Ahmet'ten başla
         System.out.println("*** DIJKSTRA TESTİ TAMAMLANDI ***");
         System.out.println("--------------------------------------\n");
+        // --- TEST 4: DERECE MERKEZİLİĞİ (YENİ) ---
+        System.out.println("\n--------------------------------------");
+        System.out.println("*** MERKEZİLİK ALGORİTMA TESTİ BAŞLIYOR ***");
+
+        com.socialnetwork.socialnetworkanalysis.algorithms.DegreeCentralityAlgorithm centrality = new com.socialnetwork.socialnetworkanalysis.algorithms.DegreeCentralityAlgorithm();
+        centrality.execute(graph, null); // Başlangıç düğümü gerekmez, herkese bakar
+
+        System.out.println("*** MERKEZİLİK TESTİ TAMAMLANDI ***");
+        System.out.println("--------------------------------------\n");
 
         // 3. Pencere Düzeni
         BorderPane root = new BorderPane();
