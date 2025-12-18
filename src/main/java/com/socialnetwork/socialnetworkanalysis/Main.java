@@ -10,7 +10,6 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.BorderPane;
 import javafx.scene.layout.VBox;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontWeight;
 import javafx.stage.Stage;
@@ -26,7 +25,7 @@ public class Main extends Application {
     public void start(Stage primaryStage) {
         // 1. Temel Bileşenleri Başlat
         graph = new Graph();
-        graphView = new GraphView(800, 600); // Çizim alanı
+        graphView = new GraphView(800, 600); // Başlangıç boyutu
         controller = new GraphController(graph, graphView);
         dataManager = new DataManager();
 
@@ -46,7 +45,7 @@ public class Main extends Application {
         TextField txtConn = new TextField("5"); txtConn.setPromptText("Bağlantı Sayısı");
 
         Button btnAddNode = new Button("Kişiyi Ekle");
-        btnAddNode.setMaxWidth(Double.MAX_VALUE); // Butonu genişlet
+        btnAddNode.setMaxWidth(Double.MAX_VALUE);
         btnAddNode.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
 
         btnAddNode.setOnAction(e -> {
@@ -57,7 +56,7 @@ public class Main extends Application {
                 double conn = Double.parseDouble(txtConn.getText());
 
                 controller.addNode(name, act, inter, conn);
-                txtName.clear(); // Eklendikten sonra ismi temizle
+                txtName.clear();
             } catch (Exception ex) {
                 showAlert("Hata", "Lütfen sayısal değerleri doğru giriniz!");
             }
@@ -99,8 +98,9 @@ public class Main extends Application {
         btnCentrality.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white;");
         btnCentrality.setOnAction(e -> controller.runCentrality());
 
-        // --- BÖLÜM 4: DOSYA İŞLEMLERİ ---
+        // --- BÖLÜM 4: DOSYA VE TEMİZLİK ---
         Separator sep = new Separator();
+
         Button btnSave = new Button("Kaydet (CSV)");
         btnSave.setMaxWidth(Double.MAX_VALUE);
         btnSave.setOnAction(e -> dataManager.saveGraph(graph, "."));
@@ -109,11 +109,17 @@ public class Main extends Application {
         btnLoad.setMaxWidth(Double.MAX_VALUE);
         btnLoad.setOnAction(e -> {
             graph = dataManager.loadGraph(".");
-            // Grafiği yenilememiz lazım, Controller'a yeni grafı verelim
             controller = new GraphController(graph, graphView);
             graphView.drawGraph(graph);
             System.out.println("Veriler yüklendi ve çizildi.");
         });
+
+        // --- YENİ EKLENEN: TEMİZLE BUTONU ---
+        Button btnClear = new Button("TEMİZLE (Sıfırla)");
+        btnClear.setMaxWidth(Double.MAX_VALUE);
+        btnClear.setStyle("-fx-background-color: #D32F2F; -fx-text-fill: white;"); // Kırmızı
+        // DİKKAT: Bu metod GraphController içinde olmalı!
+        btnClear.setOnAction(e -> controller.clearGraph());
 
         // Hepsini Panele Ekle
         sideBar.getChildren().addAll(
@@ -122,33 +128,42 @@ public class Main extends Application {
                 lblEdge, txtSource, txtTarget, btnAddEdge,
                 new Separator(),
                 lblAlgo, txtStartNode, btnBFS, btnDFS, btnDijkstra, btnCentrality,
-                sep, btnSave, btnLoad
+                sep, btnSave, btnLoad, btnClear // btnClear buraya eklendi
         );
 
         // 3. ANA DÜZEN (BorderPane)
         BorderPane root = new BorderPane();
-        root.setLeft(sideBar);    // Sol tarafa paneli koy
-        root.setCenter(graphView); // Ortaya grafiği koy
+        root.setLeft(sideBar);
+        root.setCenter(graphView);
 
         // 4. SAHNEYİ BAŞLAT
-        Scene scene = new Scene(root, 1100, 700); // Pencereyi biraz büyüttük
+        Scene scene = new Scene(root, 1100, 700);
+
+        // --- YENİ EKLENEN: RESPONSIVE (ESNEK) EKRAN ---
+        // Pencere büyüyünce grafik alanı da büyüsün
+        graphView.widthProperty().bind(root.widthProperty().subtract(250)); // Panel payını düş
+        graphView.heightProperty().bind(root.heightProperty());
+
+        // Boyut değişince yeniden çizim yap (GraphView içindeki redraw metodu)
+        graphView.widthProperty().addListener(obs -> graphView.redraw());
+        graphView.heightProperty().addListener(obs -> graphView.redraw());
+
         primaryStage.setTitle("Sosyal Ağ Analizi - Komuta Merkezi");
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // Başlangıçta boş kalmasın diye örnek veriyi otomatik yükleyelim (Opsiyonel)
-        // Eğer nodes.csv varsa yükler
+        // Otomatik Yükleme Denemesi
         try {
             graph = dataManager.loadGraph(".");
             controller = new GraphController(graph, graphView);
             graphView.drawGraph(graph);
         } catch (Exception e) {
-            System.out.println("Henüz kayıtlı veri yok, boş başlıyoruz.");
+            System.out.println("Başlangıç verisi bulunamadı, temiz açılıyor.");
         }
     }
 
     private void showAlert(String title, String message) {
-        Alert alert = new Alert(Alert.AlertType.WARNING);
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
         alert.setTitle(title);
         alert.setHeaderText(null);
         alert.setContentText(message);

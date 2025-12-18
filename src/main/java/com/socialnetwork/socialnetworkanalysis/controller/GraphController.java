@@ -21,9 +21,13 @@ public class GraphController {
 
         Node node = new Node(id, name, activity, interaction, connection);
 
-        // Ekranda rastgele bir yere koy (Üst üste binmemesi için)
-        node.setX(Math.random() * 600 + 50);
-        node.setY(Math.random() * 400 + 50);
+        // --- KOORDİNAT GÜNCELLEMESİ YAPILDI ---
+        // Eskiden +50 idi, şimdi +100 yaptık ki kenarlardan daha uzak olsunlar.
+        // X ekseni (Yatay): 100 ile 600 arasında rastgele
+        node.setX(Math.random() * 500 + 100);
+
+        // Y ekseni (Dikey): 100 ile 400 arasında rastgele (Tepeden boşluk bıraktık)
+        node.setY(Math.random() * 300 + 100);
 
         graph.addNode(node);
         view.drawGraph(graph); // Grafiği güncelle
@@ -81,6 +85,14 @@ public class GraphController {
     public void runCentrality() {
         new DegreeCentralityAlgorithm().execute(graph, null);
         showAlert("Başarılı", "Merkezilik Analizi Tamamlandı! Sonuçlar konsola yazıldı.");
+    }
+
+    // --- GRAFİĞİ TEMİZLEME METODU ---
+    public void clearGraph() {
+        graph.clear(); // Modeli boşalt
+        view.drawGraph(graph); // Ekranı boşalt
+        System.out.println("Grafik temizlendi.");
+        showAlert("Bilgi", "Ekran ve tüm veriler temizlendi. Yeni bir sayfa açtınız!");
     }
 
     // Kullanıcıya uyarı kutusu göster

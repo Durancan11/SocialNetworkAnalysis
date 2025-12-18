@@ -46,15 +46,15 @@ public class DataManager {
         }
     }
 
-    // --- YÜKLEME (LOAD) ---
+    // --- YÜKLEME (LOAD) - AKILLI SÜRÜM ---
     public Graph loadGraph(String folderPath) {
         Graph graph = new Graph();
-        Map<String, Node> tempNodes = new HashMap<>(); // ID ile düğümü bulmak için geçici hafıza
+        Map<String, Node> tempNodes = new HashMap<>();
 
         try {
             // 1. Düğümleri Oku
             File nodeFile = new File(folderPath + "/nodes.csv");
-            if (!nodeFile.exists()) return graph; // Dosya yoksa boş graf dön
+            if (!nodeFile.exists()) return graph;
 
             BufferedReader nodeReader = new BufferedReader(new FileReader(nodeFile));
             String line = nodeReader.readLine(); // Başlığı atla
@@ -64,7 +64,6 @@ public class DataManager {
                 if (parts.length >= 7) {
                     String id = parts[0];
                     String name = parts[1];
-                    // Koordinatları ve özellikleri al
                     double x = Double.parseDouble(parts[2]);
                     double y = Double.parseDouble(parts[3]);
                     double activity = Double.parseDouble(parts[4]);
@@ -72,8 +71,19 @@ public class DataManager {
                     double connCount = Double.parseDouble(parts[6]);
 
                     Node node = new Node(id, name, activity, interaction, connCount);
-                    node.setX(x);
-                    node.setY(y);
+
+                    // --- DÜZELTME OPERASYONU ---
+                    // Eğer eski kayıt çok tepedeyse veya soldaysa (x veya y < 80),
+                    // onları merkeze taşı.
+                    if (y < 80 || x < 50) {
+                        node.setX(Math.random() * 500 + 100);
+                        node.setY(Math.random() * 300 + 100);
+                    } else {
+                        // Zaten düzgün yerdeyse elleme
+                        node.setX(x);
+                        node.setY(y);
+                    }
+                    // ---------------------------
 
                     graph.addNode(node);
                     tempNodes.put(id, node);
@@ -85,7 +95,7 @@ public class DataManager {
             File edgeFile = new File(folderPath + "/edges.csv");
             if (edgeFile.exists()) {
                 BufferedReader edgeReader = new BufferedReader(new FileReader(edgeFile));
-                line = edgeReader.readLine(); // Başlığı atla
+                line = edgeReader.readLine();
 
                 while ((line = edgeReader.readLine()) != null) {
                     String[] parts = line.split(",");
