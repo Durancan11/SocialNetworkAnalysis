@@ -1,6 +1,7 @@
 package com.socialnetwork.socialnetworkanalysis.model;
 
 import java.util.Objects;
+import javafx.scene.paint.Color; // Renk kütüphanesi
 
 public class Node {
     private String id;
@@ -14,6 +15,10 @@ public class Node {
     // Ekranda çizim yaparken kullanacağımız koordinatlar
     private double x, y;
 
+    // --- YENİ EKLENEN: RENK ÖZELLİĞİ ---
+    // Varsayılan olarak o güzel mavi rengi veriyoruz
+    private Color color = Color.CORNFLOWERBLUE;
+
     public Node(String id, String name, double activity, double interaction, double connectionCount) {
         this.id = id;
         this.name = name;
@@ -22,7 +27,17 @@ public class Node {
         this.connectionCount = connectionCount;
     }
 
-    // Getter Metotları
+    // --- YENİ EKLENEN: RENK GETTER/SETTER ---
+    public Color getColor() {
+        return color;
+    }
+
+    public void setColor(Color color) {
+        this.color = color;
+    }
+    // ----------------------------------------
+
+    // Mevcut Getter Metotları
     public String getId() { return id; }
     public String getName() { return name; }
     public double getActivity() { return activity; }
@@ -37,7 +52,7 @@ public class Node {
     @Override
     public String toString() { return name + " (" + id + ")"; }
 
-    // HashCode ve Equals (Listelerde düzgün çalışması için şart)
+    // HashCode ve Equals
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

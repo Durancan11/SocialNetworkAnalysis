@@ -5,7 +5,9 @@ import com.socialnetwork.socialnetworkanalysis.model.Node;
 import com.socialnetwork.socialnetworkanalysis.model.Edge;
 
 import java.io.*;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DataManager {
@@ -32,7 +34,7 @@ public class DataManager {
 
             for (Node node : graph.getAllNodes()) {
                 for (Edge edge : graph.getNeighbors(node)) {
-                    // Çift kaydı önle (A-B varsa B-A yazma)
+                    // Çift kaydı önle
                     if (edge.getSource().getId().compareTo(edge.getTarget().getId()) < 0) {
                         edgeWriter.write(edge.getSource().getId() + "," + edge.getTarget().getId() + "\n");
                     }
@@ -46,10 +48,11 @@ public class DataManager {
         }
     }
 
-    // --- YÜKLEME (LOAD) - AKILLI SÜRÜM ---
+    // --- YÜKLEME (LOAD) - ÇAKIŞMA ÖNLEYİCİ SÜRÜM ---
     public Graph loadGraph(String folderPath) {
         Graph graph = new Graph();
         Map<String, Node> tempNodes = new HashMap<>();
+        List<Node> loadedNodes = new ArrayList<>(); // Konum kontrolü için liste
 
         try {
             // 1. Düğümleri Oku
@@ -72,21 +75,24 @@ public class DataManager {
 
                     Node node = new Node(id, name, activity, interaction, connCount);
 
-                    // --- DÜZELTME OPERASYONU ---
-                    // Eğer eski kayıt çok tepedeyse veya soldaysa (x veya y < 80),
-                    // onları merkeze taşı.
-                    if (y < 80 || x < 50) {
-                        node.setX(Math.random() * 500 + 100);
-                        node.setY(Math.random() * 300 + 100);
+                    // --- DÜZELTME 1: Sadece koordinatı olmayanları (0,0) rastgele at ---
+                    // Artık her seferinde yer değiştirmeyecek!
+                    if (x == 0 && y == 0) {
+                        setSafeRandomPosition(node, loadedNodes);
                     } else {
-                        // Zaten düzgün yerdeyse elleme
+                        // Kayıtlı konumu kullan ama üst üste binmişse hafif kaydır
                         node.setX(x);
                         node.setY(y);
+                        // Eğer bu konumda başka biri varsa, çok az kaydır ki üst üste binmesin
+                        while (isOverlapping(node, loadedNodes)) {
+                            node.setX(node.getX() + 20); // Biraz sağa
+                            node.setY(node.getY() + 20); // Biraz aşağı
+                        }
                     }
-                    // ---------------------------
 
                     graph.addNode(node);
                     tempNodes.put(id, node);
+                    loadedNodes.add(node);
                 }
             }
             nodeReader.close();
@@ -102,10 +108,8 @@ public class DataManager {
                     if (parts.length >= 2) {
                         String sourceId = parts[0];
                         String targetId = parts[1];
-
                         Node source = tempNodes.get(sourceId);
                         Node target = tempNodes.get(targetId);
-
                         if (source != null && target != null) {
                             graph.addEdge(source, target);
                         }
@@ -113,13 +117,43 @@ public class DataManager {
                 }
                 edgeReader.close();
             }
-            System.out.println("Yükleme Başarılı.");
 
         } catch (IOException e) {
             e.printStackTrace();
-            System.err.println("Dosya okuma hatası!");
         }
 
         return graph;
+    }
+
+    // GÜVENLİ KONUM BULUCU (Üst üste binmeyi engeller)
+    private void setSafeRandomPosition(Node newNode, List<Node> existingNodes) {
+        int maxAttempts = 100; // Sonsuz döngüye girmesin
+        for (int i = 0; i < maxAttempts; i++) {
+            // Rastgele bir yer seç
+            double newX = Math.random() * 600 + 50;
+            double newY = Math.random() * 400 + 50;
+
+            newNode.setX(newX);
+            newNode.setY(newY);
+
+            // Çarpışma var mı kontrol et
+            if (!isOverlapping(newNode, existingNodes)) {
+                return; // Yer güvenli, çık.
+            }
+        }
+    }
+
+    // İki düğüm üst üste mi? (Mesafeye bakar)
+    private boolean isOverlapping(Node n1, List<Node> nodes) {
+        double minDistance = 50.0; // Dairelerin birbirine girebileceği en yakın mesafe
+        for (Node n2 : nodes) {
+            if (n1 == n2) continue; // Kendisiyle kıyaslama
+
+            double dist = Math.sqrt(Math.pow(n1.getX() - n2.getX(), 2) + Math.pow(n1.getY() - n2.getY(), 2));
+            if (dist < minDistance) {
+                return true; // Çarpışma var!
+            }
+        }
+        return false;
     }
 }

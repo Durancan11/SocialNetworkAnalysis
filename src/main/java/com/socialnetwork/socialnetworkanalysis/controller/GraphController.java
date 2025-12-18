@@ -14,23 +14,48 @@ public class GraphController {
         this.view = view;
     }
 
-    // Yeni Düğüm Ekleme
+    // Yeni Düğüm Ekleme (ÇAKIŞMA ÖNLEYİCİ VERSİYON)
     public void addNode(String name, double activity, double interaction, double connection) {
-        // ID'yi otomatik üret (Örn: "5")
         String id = String.valueOf(graph.getAllNodes().size() + 1);
-
         Node node = new Node(id, name, activity, interaction, connection);
 
-        // --- KOORDİNAT GÜNCELLEMESİ YAPILDI ---
-        // Eskiden +50 idi, şimdi +100 yaptık ki kenarlardan daha uzak olsunlar.
-        // X ekseni (Yatay): 100 ile 600 arasında rastgele
-        node.setX(Math.random() * 500 + 100);
+        // --- AKILLI YERLEŞİM ---
+        // Rastgele yer seç ama doluysa tekrar dene
+        boolean safePositionFound = false;
+        int attempts = 0;
 
-        // Y ekseni (Dikey): 100 ile 400 arasında rastgele (Tepeden boşluk bıraktık)
-        node.setY(Math.random() * 300 + 100);
+        while (!safePositionFound && attempts < 100) {
+            // 50 ile 700 arası X, 50 ile 500 arası Y (Ekran ortaları)
+            double tryX = Math.random() * 650 + 50;
+            double tryY = Math.random() * 450 + 50;
+
+            boolean collision = false;
+            // Mevcut tüm düğümlere bak, çarpışıyor mu?
+            for (Node existing : graph.getAllNodes()) {
+                double dist = Math.sqrt(Math.pow(tryX - existing.getX(), 2) + Math.pow(tryY - existing.getY(), 2));
+                if (dist < 60) { // 60 pikselden yakınsa çarpışma var
+                    collision = true;
+                    break;
+                }
+            }
+
+            if (!collision) {
+                node.setX(tryX);
+                node.setY(tryY);
+                safePositionFound = true;
+            }
+            attempts++;
+        }
+
+        // Eğer 100 denemede yer bulamazsa mecbur rastgele koy
+        if (!safePositionFound) {
+            node.setX(Math.random() * 600 + 50);
+            node.setY(Math.random() * 400 + 50);
+        }
+        // -----------------------
 
         graph.addNode(node);
-        view.drawGraph(graph); // Grafiği güncelle
+        view.drawGraph(graph);
         System.out.println("Eklendi: " + name);
     }
 
@@ -95,6 +120,12 @@ public class GraphController {
         showAlert("Bilgi", "Ekran ve tüm veriler temizlendi. Yeni bir sayfa açtınız!");
     }
 
+    public void runWelshPowell() {
+        new WelshPowellAlgorithm().execute(graph, null);
+        view.drawGraph(graph); // Renkler değiştiği için ekranı yenile!
+        showAlert("Başarılı", "Graf renklendirildi! Komşu düğümler farklı renklere boyandı.");
+    }
+
     // Kullanıcıya uyarı kutusu göster
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -102,5 +133,27 @@ public class GraphController {
         alert.setHeaderText(null);
         alert.setContentText(message);
         alert.showAndWait();
+    }
+
+    // A* Algoritması Tetikleyicisi
+    // DİKKAT: Bu metod hem başlangıç hem bitiş ismini alır!
+    public void runAStar(String startName, String targetName) {
+        Node start = findNodeByName(startName);
+        Node target = findNodeByName(targetName);
+
+        if (start == null || target == null) {
+            showAlert("Hata", "Başlangıç veya Hedef düğümü bulunamadı!");
+            return;
+        }
+
+        AStarAlgorithm aStar = new AStarAlgorithm();
+        aStar.findPath(graph, start, target);
+        showAlert("Başarılı", "A* Algoritması tamamlandı! Sonuç konsola yazıldı.");
+    }
+
+    // Topluluk Bulma Tetikleyicisi
+    public void runConnectedComponents() {
+        new ConnectedComponentsAlgorithm().execute(graph, null);
+        showAlert("Başarılı", "Topluluk Analizi Tamamlandı! Sonuçlar konsola yazıldı.");
     }
 }

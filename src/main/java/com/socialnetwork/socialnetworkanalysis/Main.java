@@ -93,10 +93,26 @@ public class Main extends Application {
         btnDijkstra.setMaxWidth(Double.MAX_VALUE);
         btnDijkstra.setOnAction(e -> controller.runDijkstra(txtStartNode.getText()));
 
+        Button btnAStar = new Button("A* (A-Star) En Kısa Yol");
+        btnAStar.setMaxWidth(Double.MAX_VALUE);
+        btnAStar.setOnAction(e -> controller.runAStar(txtSource.getText(), txtTarget.getText()));
+
         Button btnCentrality = new Button("En Popüler Kim? (Merkezilik)");
         btnCentrality.setMaxWidth(Double.MAX_VALUE);
         btnCentrality.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white;");
         btnCentrality.setOnAction(e -> controller.runCentrality());
+
+        Button btnColoring = new Button("Renklendir (Welsh-Powell)");
+        btnColoring.setMaxWidth(Double.MAX_VALUE);
+        btnColoring.setStyle("-fx-background-color: #9C27B0; -fx-text-fill: white;"); // Mor renk
+        btnColoring.setOnAction(e -> controller.runWelshPowell());
+
+        // --- YENİ EKLENEN: TOPLULUK ANALİZİ ---
+        Button btnComponents = new Button("Toplulukları Bul (Analiz)");
+        btnComponents.setMaxWidth(Double.MAX_VALUE);
+        btnComponents.setStyle("-fx-background-color: #607D8B; -fx-text-fill: white;"); // Gri-Mavi
+        // GraphController'da runConnectedComponents metodu olmalı!
+        btnComponents.setOnAction(e -> controller.runConnectedComponents());
 
         // --- BÖLÜM 4: DOSYA VE TEMİZLİK ---
         Separator sep = new Separator();
@@ -114,21 +130,19 @@ public class Main extends Application {
             System.out.println("Veriler yüklendi ve çizildi.");
         });
 
-        // --- YENİ EKLENEN: TEMİZLE BUTONU ---
         Button btnClear = new Button("TEMİZLE (Sıfırla)");
         btnClear.setMaxWidth(Double.MAX_VALUE);
-        btnClear.setStyle("-fx-background-color: #D32F2F; -fx-text-fill: white;"); // Kırmızı
-        // DİKKAT: Bu metod GraphController içinde olmalı!
+        btnClear.setStyle("-fx-background-color: #D32F2F; -fx-text-fill: white;");
         btnClear.setOnAction(e -> controller.clearGraph());
 
-        // Hepsini Panele Ekle
+        // Hepsini Panele Ekle (btnComponents da eklendi)
         sideBar.getChildren().addAll(
                 lblAdd, txtName, txtAct, txtInt, txtConn, btnAddNode,
                 new Separator(),
                 lblEdge, txtSource, txtTarget, btnAddEdge,
                 new Separator(),
-                lblAlgo, txtStartNode, btnBFS, btnDFS, btnDijkstra, btnCentrality,
-                sep, btnSave, btnLoad, btnClear // btnClear buraya eklendi
+                lblAlgo, txtStartNode, btnBFS, btnDFS, btnDijkstra, btnAStar, btnCentrality, btnColoring, btnComponents,
+                sep, btnSave, btnLoad, btnClear
         );
 
         // 3. ANA DÜZEN (BorderPane)
@@ -139,12 +153,9 @@ public class Main extends Application {
         // 4. SAHNEYİ BAŞLAT
         Scene scene = new Scene(root, 1100, 700);
 
-        // --- YENİ EKLENEN: RESPONSIVE (ESNEK) EKRAN ---
-        // Pencere büyüyünce grafik alanı da büyüsün
-        graphView.widthProperty().bind(root.widthProperty().subtract(250)); // Panel payını düş
+        graphView.widthProperty().bind(root.widthProperty().subtract(250));
         graphView.heightProperty().bind(root.heightProperty());
 
-        // Boyut değişince yeniden çizim yap (GraphView içindeki redraw metodu)
         graphView.widthProperty().addListener(obs -> graphView.redraw());
         graphView.heightProperty().addListener(obs -> graphView.redraw());
 
@@ -152,7 +163,6 @@ public class Main extends Application {
         primaryStage.setScene(scene);
         primaryStage.show();
 
-        // Otomatik Yükleme Denemesi
         try {
             graph = dataManager.loadGraph(".");
             controller = new GraphController(graph, graphView);

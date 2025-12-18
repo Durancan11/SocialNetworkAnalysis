@@ -14,6 +14,41 @@ public class GraphView extends Canvas {
 
     public GraphView(double width, double height) {
         super(width, height);
+
+        // TIKLAMA OLAYINI DİNLE
+        this.setOnMouseClicked(event -> {
+            if (currentGraph == null) return;
+
+            double mouseX = event.getX();
+            double mouseY = event.getY();
+
+            // Tüm düğümleri kontrol et: Acaba hangisine tıkladık?
+            for (Node node : currentGraph.getAllNodes()) {
+                // Pisagor bağıntısı ile mesafe ölç (Merkeze yakın mı?)
+                double distance = Math.sqrt(Math.pow(mouseX - node.getX(), 2) + Math.pow(mouseY - node.getY(), 2));
+
+                // Düğümün yarıçapı 20 idi, eğer mesafe 20'den küçükse tıklanmıştır
+                if (distance <= 20) {
+                    showNodeInfo(node);
+                    break; // Bulduk, döngüden çık
+                }
+            }
+        });
+    }
+
+    // Bilgi Penceresi Açan Metod
+    private void showNodeInfo(Node node) {
+        javafx.scene.control.Alert alert = new javafx.scene.control.Alert(javafx.scene.control.Alert.AlertType.INFORMATION);
+        alert.setTitle("Düğüm Bilgisi");
+        alert.setHeaderText(node.getName() + " (" + node.getId() + ")");
+
+        String info = "Aktiflik: " + node.getActivity() + "\n" +
+                "Etkileşim: " + node.getInteraction() + "\n" +
+                "Bağlantı Puanı: " + node.getConnectionCount() + "\n" +
+                "Koordinat: (" + (int)node.getX() + ", " + (int)node.getY() + ")";
+
+        alert.setContentText(info);
+        alert.showAndWait();
     }
 
     // Pencere boyutu değişince çizimi yenilemek için
@@ -75,7 +110,7 @@ public class GraphView extends Canvas {
 
     private void drawNode(GraphicsContext gc, Node node) {
         double r = 20;
-        gc.setFill(Color.CORNFLOWERBLUE);
+        gc.setFill(node.getColor());
         gc.fillOval(node.getX() - r, node.getY() - r, r * 2, r * 2);
         gc.setStroke(Color.BLACK);
         gc.strokeOval(node.getX() - r, node.getY() - r, r * 2, r * 2);
