@@ -1,6 +1,9 @@
 package com.socialnetwork.socialnetworkanalysis;
 
-import com.socialnetwork.socialnetworkanalysis.controller.DataManager; // YENİ: Bunu ekledik
+import com.socialnetwork.socialnetworkanalysis.algorithms.BFSAlgorithm;
+import com.socialnetwork.socialnetworkanalysis.algorithms.DFSAlgorithm;
+import com.socialnetwork.socialnetworkanalysis.algorithms.DijkstraAlgorithm; // YENİ: Dijkstra eklendi
+import com.socialnetwork.socialnetworkanalysis.controller.DataManager;
 import com.socialnetwork.socialnetworkanalysis.model.Graph;
 import com.socialnetwork.socialnetworkanalysis.model.Node;
 import com.socialnetwork.socialnetworkanalysis.view.GraphView;
@@ -37,12 +40,34 @@ public class Main extends Application {
         GraphView graphView = new GraphView(800, 600);
         graphView.drawGraph(graph); // Grafı çizdir!
 
-        // --- YENİ EKLENEN KISIM (KAYIT TESTİ) ---
-        // Pencere açılmadan hemen önce verileri kaydediyoruz
+        // --- VERİ KAYDI ---
         System.out.println("Veriler kaydediliyor...");
         DataManager dataManager = new DataManager();
-        dataManager.saveGraph(graph, "."); // "." nokta, şu anki klasör demektir
-        // ----------------------------------------
+        dataManager.saveGraph(graph, ".");
+
+        // --- TEST 1: BFS ALGORİTMASI ---
+        System.out.println("\n--------------------------------------");
+        System.out.println("*** BFS ALGORİTMA TESTİ BAŞLIYOR ***");
+        BFSAlgorithm bfs = new BFSAlgorithm();
+        bfs.execute(graph, n1); // Ahmet'ten başla
+        System.out.println("*** BFS TESTİ TAMAMLANDI ***");
+        System.out.println("--------------------------------------");
+
+        // --- TEST 2: DFS ALGORİTMASI ---
+        System.out.println("\n--------------------------------------");
+        System.out.println("*** DFS ALGORİTMA TESTİ BAŞLIYOR ***");
+        DFSAlgorithm dfs = new DFSAlgorithm();
+        dfs.execute(graph, n1); // Ahmet'ten başla
+        System.out.println("*** DFS TESTİ TAMAMLANDI ***");
+        System.out.println("--------------------------------------");
+
+        // --- TEST 3: DIJKSTRA ALGORİTMASI (YENİ) ---
+        System.out.println("\n--------------------------------------");
+        System.out.println("*** DIJKSTRA ALGORİTMA TESTİ BAŞLIYOR ***");
+        DijkstraAlgorithm dijkstra = new DijkstraAlgorithm();
+        dijkstra.execute(graph, n1); // Ahmet'ten başla
+        System.out.println("*** DIJKSTRA TESTİ TAMAMLANDI ***");
+        System.out.println("--------------------------------------\n");
 
         // 3. Pencere Düzeni
         BorderPane root = new BorderPane();
