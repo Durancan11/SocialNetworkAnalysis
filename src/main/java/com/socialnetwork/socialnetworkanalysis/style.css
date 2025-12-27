@@ -1,0 +1,98 @@
+/* --- GENEL KARANLIK TEMA --- */
+.root {
+    -fx-font-family: "Segoe UI", "Verdana", sans-serif;
+    -fx-background-color: #121212; /* Derin Siyah */
+}
+
+/* --- SOL PANEL (CAM ETKİSİ) --- */
+.sidebar {
+    -fx-background-color: rgba(30, 30, 30, 0.95);
+    -fx-border-color: transparent #333333 transparent transparent;
+    -fx-border-width: 0 1 0 0;
+    -fx-padding: 20;
+}
+
+/* --- BAŞLIKLAR --- */
+.header-label {
+    -fx-font-size: 22px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #00e5ff; /* Neon Camgöbeği */
+    -fx-effect: dropshadow(gaussian, rgba(0, 229, 255, 0.4), 10, 0.5, 0, 0);
+    -fx-padding: 0 0 15 0;
+}
+
+.section-label {
+    -fx-font-size: 11px;
+    -fx-font-weight: bold;
+    -fx-text-fill: #757575;
+    -fx-padding: 20 0 5 0;
+    -fx-border-color: transparent transparent #333333 transparent;
+    -fx-border-width: 0 0 1 0;
+}
+
+/* --- INPUT KUTULARI (DARK) --- */
+.text-field {
+    -fx-background-color: #1e1e1e;
+    -fx-text-fill: #e0e0e0;
+    -fx-prompt-text-fill: #666;
+    -fx-border-color: #444;
+    -fx-border-radius: 4;
+    -fx-background-radius: 4;
+    -fx-padding: 8;
+}
+
+.text-field:focused {
+    -fx-border-color: #00e5ff; /* Odaklanınca Neon Çerçeve */
+    -fx-background-color: #252525;
+    -fx-effect: dropshadow(gaussian, rgba(0, 229, 255, 0.2), 5, 0, 0, 0);
+}
+
+/* --- BUTONLAR (NEON GRADIENT) --- */
+.button {
+    -fx-background-color: linear-gradient(to right, #00c6ff, #0072ff);
+    -fx-text-fill: white;
+    -fx-font-weight: bold;
+    -fx-background-radius: 20; /* Tam yuvarlak */
+    -fx-padding: 8 20;
+    -fx-cursor: hand;
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 114, 255, 0.4), 10, 0, 0, 4);
+}
+
+.button:hover {
+    -fx-background-color: linear-gradient(to right, #00d2ff, #3a7bd5);
+    -fx-effect: dropshadow(three-pass-box, rgba(0, 229, 255, 0.6), 15, 0, 0, 0);
+    -fx-scale-x: 1.02;
+    -fx-scale-y: 1.02;
+}
+
+.button:pressed {
+    -fx-background-color: #005bb5;
+    -fx-effect: none;
+}
+
+/* --- İKİNCİL BUTONLAR (GHOST STYLE) --- */
+#btnSecondary {
+    -fx-background-color: transparent;
+    -fx-border-color: #555;
+    -fx-border-radius: 20;
+    -fx-text-fill: #aaa;
+    -fx-effect: none;
+}
+#btnSecondary:hover {
+    -fx-border-color: #fff;
+    -fx-text-fill: #fff;
+    -fx-background-color: rgba(255,255,255,0.05);
+}
+
+/* --- TEHLİKE BUTONU (NEON KIRMIZI) --- */
+#btnDanger {
+    -fx-background-color: linear-gradient(to right, #ff416c, #ff4b2b);
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 75, 43, 0.4), 10, 0, 0, 4);
+}
+#btnDanger:hover {
+    -fx-effect: dropshadow(three-pass-box, rgba(255, 65, 108, 0.6), 15, 0, 0, 0);
+}
+
+/* --- SCROLL PANE --- */
+.scroll-pane { -fx-background-color: transparent; }
+.scroll-pane > .viewport { -fx-background-color: transparent; }

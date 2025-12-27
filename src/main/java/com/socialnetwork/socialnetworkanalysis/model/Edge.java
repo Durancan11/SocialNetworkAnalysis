@@ -1,31 +1,27 @@
 package com.socialnetwork.socialnetworkanalysis.model;
 
 public class Edge {
-    private Node source; // Başlangıç düğümü
-    private Node target; // Bitiş düğümü
-    private double weight; // Hesaplanan ağırlık
+    private Node source;
+    private Node target;
+    private double weight; // YENİ: Ağırlık özelliği
 
-    public Edge(Node source, Node target) {
+    // Yeni Constructor: Ağırlık alıyor
+    public Edge(Node source, Node target, double weight) {
         this.source = source;
         this.target = target;
-        this.weight = calculateWeight(); // Otomatik hesapla
+        this.weight = weight;
     }
 
-    // PDF Madde 4.3'teki Özel Karekök Formülü
-    private double calculateWeight() {
-        double diffActivity = source.getActivity() - target.getActivity();
-        double diffInteraction = source.getInteraction() - target.getInteraction();
-        double diffConnection = source.getConnectionCount() - target.getConnectionCount();
-
-        // 1 + Karekök(...)
-        return 1 + Math.sqrt(
-                Math.pow(diffActivity, 2) +
-                        Math.pow(diffInteraction, 2) +
-                        Math.pow(diffConnection, 2)
-        );
-    }
-
+    // Getter Metodları
     public Node getSource() { return source; }
     public Node getTarget() { return target; }
     public double getWeight() { return weight; }
+
+    // Setter (Gerekirse ağırlığı sonradan değiştirmek için)
+    public void setWeight(double weight) { this.weight = weight; }
+
+    @Override
+    public String toString() {
+        return source.getName() + " -> " + target.getName() + " (" + weight + ")";
+    }
 }

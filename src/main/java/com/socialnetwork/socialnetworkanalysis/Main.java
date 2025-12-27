@@ -8,11 +8,9 @@ import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.layout.BorderPane;
-import javafx.scene.layout.VBox;
-import javafx.scene.text.Font;
-import javafx.scene.text.FontWeight;
+import javafx.scene.layout.*;
 import javafx.stage.Stage;
+import java.util.Objects;
 
 public class Main extends Application {
 
@@ -23,143 +21,153 @@ public class Main extends Application {
 
     @Override
     public void start(Stage primaryStage) {
-        // 1. Temel Bileşenleri Başlat
+        // 1. Başlangıç
         graph = new Graph();
-        graphView = new GraphView(800, 600); // Başlangıç boyutu
+        graphView = new GraphView(800, 600);
         controller = new GraphController(graph, graphView);
         dataManager = new DataManager();
 
-        // 2. SOL PANEL (Kontrol Paneli) Oluştur
-        VBox sideBar = new VBox(10); // Elemanlar arası 10px boşluk
-        sideBar.setPadding(new Insets(15));
-        sideBar.setStyle("-fx-background-color: #f0f0f0; -fx-border-color: #ccc;");
-        sideBar.setPrefWidth(250);
+        // --- SOL PANEL (SIDEBAR) ---
+        VBox sidebarContent = new VBox(15);
+        sidebarContent.setPadding(new Insets(25));
 
-        // --- BÖLÜM 1: YENİ KİŞİ EKLE ---
-        Label lblAdd = new Label("YENİ KİŞİ EKLE");
-        lblAdd.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        // LOGO / BAŞLIK
+        Label title = new Label("NEO-GRAPH");
+        title.getStyleClass().add("header-label");
 
-        TextField txtName = new TextField(); txtName.setPromptText("İsim (Örn: Ali)");
-        TextField txtAct = new TextField("0.5"); txtAct.setPromptText("Aktiflik (0.0 - 1.0)");
-        TextField txtInt = new TextField("0.5"); txtInt.setPromptText("Etkileşim (0.0 - 1.0)");
-        TextField txtConn = new TextField("5"); txtConn.setPromptText("Bağlantı Sayısı");
+        // --- BÖLÜM 1: GİRİŞ ---
+        Label lblSec1 = new Label("VERİ GİRİŞİ");
+        lblSec1.getStyleClass().add("section-label");
 
-        Button btnAddNode = new Button("Kişiyi Ekle");
-        btnAddNode.setMaxWidth(Double.MAX_VALUE);
-        btnAddNode.setStyle("-fx-background-color: #4CAF50; -fx-text-fill: white;");
+        TextField txtName = new TextField(); txtName.setPromptText("Kullanıcı Adı");
 
-        btnAddNode.setOnAction(e -> {
+        HBox statsBox = new HBox(5);
+        TextField txtAct = new TextField("0.5"); txtAct.setPromptText("Akt.");
+        TextField txtInt = new TextField("0.5"); txtInt.setPromptText("Etk.");
+        TextField txtConn = new TextField("5"); txtConn.setPromptText("Puan");
+        statsBox.getChildren().addAll(txtAct, txtInt, txtConn);
+        HBox.setHgrow(txtAct, Priority.ALWAYS); HBox.setHgrow(txtInt, Priority.ALWAYS); HBox.setHgrow(txtConn, Priority.ALWAYS);
+
+        Button btnAdd = new Button("+ SİSTEME EKLE");
+        btnAdd.setMaxWidth(Double.MAX_VALUE);
+        btnAdd.setOnAction(e -> {
             try {
-                String name = txtName.getText();
-                double act = Double.parseDouble(txtAct.getText());
-                double inter = Double.parseDouble(txtInt.getText());
-                double conn = Double.parseDouble(txtConn.getText());
-
-                controller.addNode(name, act, inter, conn);
+                controller.addNode(txtName.getText(), Double.parseDouble(txtAct.getText()), Double.parseDouble(txtInt.getText()), Double.parseDouble(txtConn.getText()));
                 txtName.clear();
-            } catch (Exception ex) {
-                showAlert("Hata", "Lütfen sayısal değerleri doğru giriniz!");
-            }
+            } catch (Exception ex) { }
         });
 
-        // --- BÖLÜM 2: BAĞLANTI KUR ---
-        Label lblEdge = new Label("BAĞLANTI KUR");
-        lblEdge.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        // --- BÖLÜM 2: BAĞLANTI HATTI ---
+        Label lblSec2 = new Label("BAĞLANTI HATTI");
+        lblSec2.getStyleClass().add("section-label");
 
-        TextField txtSource = new TextField(); txtSource.setPromptText("Kimden (Örn: Ali)");
-        TextField txtTarget = new TextField(); txtTarget.setPromptText("Kime (Örn: Ayşe)");
+        TextField txtSrc = new TextField(); txtSrc.setPromptText("Kaynak Node");
+        TextField txtDst = new TextField(); txtDst.setPromptText("Hedef Node");
 
-        Button btnAddEdge = new Button("Bağlantı Ekle");
-        btnAddEdge.setMaxWidth(Double.MAX_VALUE);
-        btnAddEdge.setOnAction(e -> {
-            controller.addEdge(txtSource.getText(), txtTarget.getText());
-        });
+        Button btnLink = new Button("BAĞLANTI KUR");
+        btnLink.setId("btnSecondary");
+        btnLink.setMaxWidth(Double.MAX_VALUE);
+        btnLink.setOnAction(e -> controller.addEdge(txtSrc.getText(), txtDst.getText()));
 
-        // --- BÖLÜM 3: ALGORİTMALAR ---
-        Label lblAlgo = new Label("ANALİZ & ALGORİTMA");
-        lblAlgo.setFont(Font.font("Arial", FontWeight.BOLD, 14));
+        Button btnUnlink = new Button("BAĞI KOPAR (SİL)");
+        btnUnlink.setId("btnDanger");
+        btnUnlink.setMaxWidth(Double.MAX_VALUE);
+        btnUnlink.setOnAction(e -> controller.removeEdge(txtSrc.getText(), txtDst.getText()));
 
-        TextField txtStartNode = new TextField(); txtStartNode.setPromptText("Başlangıç Kişisi (İsim)");
+        // --- BÖLÜM 3: ANALİZ MOTORU ---
+        Label lblSec3 = new Label("ANALİZ MOTORU");
+        lblSec3.getStyleClass().add("section-label");
 
-        Button btnBFS = new Button("BFS (Genişlik)");
-        btnBFS.setMaxWidth(Double.MAX_VALUE);
-        btnBFS.setOnAction(e -> controller.runBFS(txtStartNode.getText()));
+        TextField txtStart = new TextField(); txtStart.setPromptText("Başlangıç Noktası");
 
-        Button btnDFS = new Button("DFS (Derinlik)");
-        btnDFS.setMaxWidth(Double.MAX_VALUE);
-        btnDFS.setOnAction(e -> controller.runDFS(txtStartNode.getText()));
+        GridPane gridAlgo = new GridPane();
+        gridAlgo.setHgap(5); gridAlgo.setVgap(5);
 
-        Button btnDijkstra = new Button("Dijkstra (En Kısa Yol)");
-        btnDijkstra.setMaxWidth(Double.MAX_VALUE);
-        btnDijkstra.setOnAction(e -> controller.runDijkstra(txtStartNode.getText()));
+        Button btnBFS = new Button("BFS"); btnBFS.setMaxWidth(Double.MAX_VALUE); btnBFS.setId("btnSecondary");
+        Button btnDFS = new Button("DFS"); btnDFS.setMaxWidth(Double.MAX_VALUE); btnBFS.setId("btnSecondary"); // ID düzeltildi
+        Button btnDijk = new Button("Dijkstra"); btnDijk.setMaxWidth(Double.MAX_VALUE); btnDijk.setId("btnSecondary"); // Değişken adı düzeltildi
+        Button btnAStar = new Button("A* Path"); btnAStar.setMaxWidth(Double.MAX_VALUE); btnAStar.setId("btnSecondary"); // Değişken adı düzeltildi
 
-        Button btnAStar = new Button("A* (A-Star) En Kısa Yol");
-        btnAStar.setMaxWidth(Double.MAX_VALUE);
-        btnAStar.setOnAction(e -> controller.runAStar(txtSource.getText(), txtTarget.getText()));
+        gridAlgo.add(btnBFS, 0, 0); gridAlgo.add(btnDFS, 1, 0);
+        gridAlgo.add(btnDijk, 0, 1); gridAlgo.add(btnAStar, 1, 1);
 
-        Button btnCentrality = new Button("En Popüler Kim? (Merkezilik)");
-        btnCentrality.setMaxWidth(Double.MAX_VALUE);
-        btnCentrality.setStyle("-fx-background-color: #FF9800; -fx-text-fill: white;");
-        btnCentrality.setOnAction(e -> controller.runCentrality());
+        ColumnConstraints col1 = new ColumnConstraints(); col1.setPercentWidth(50);
+        ColumnConstraints col2 = new ColumnConstraints(); col2.setPercentWidth(50);
+        gridAlgo.getColumnConstraints().addAll(col1, col2);
 
-        Button btnColoring = new Button("Renklendir (Welsh-Powell)");
-        btnColoring.setMaxWidth(Double.MAX_VALUE);
-        btnColoring.setStyle("-fx-background-color: #9C27B0; -fx-text-fill: white;"); // Mor renk
-        btnColoring.setOnAction(e -> controller.runWelshPowell());
+        btnBFS.setOnAction(e -> controller.runBFS(txtStart.getText()));
+        btnDFS.setOnAction(e -> controller.runDFS(txtStart.getText()));
+        btnDijk.setOnAction(e -> controller.runDijkstra(txtStart.getText()));
+        btnAStar.setOnAction(e -> controller.runAStar(txtSrc.getText(), txtDst.getText()));
 
-        // --- YENİ EKLENEN: TOPLULUK ANALİZİ ---
-        Button btnComponents = new Button("Toplulukları Bul (Analiz)");
-        btnComponents.setMaxWidth(Double.MAX_VALUE);
-        btnComponents.setStyle("-fx-background-color: #607D8B; -fx-text-fill: white;"); // Gri-Mavi
-        // GraphController'da runConnectedComponents metodu olmalı!
-        btnComponents.setOnAction(e -> controller.runConnectedComponents());
+        Button btnCentral = new Button("MERKEZİLİK ANALİZİ");
+        btnCentral.setMaxWidth(Double.MAX_VALUE); btnCentral.setId("btnSecondary");
+        btnCentral.setOnAction(e -> controller.runCentrality());
 
-        // --- BÖLÜM 4: DOSYA VE TEMİZLİK ---
-        Separator sep = new Separator();
+        Button btnColor = new Button("RENKLENDİRME MODU");
+        btnColor.setMaxWidth(Double.MAX_VALUE);
+        btnColor.setOnAction(e -> controller.runWelshPowell());
 
-        Button btnSave = new Button("Kaydet (CSV)");
-        btnSave.setMaxWidth(Double.MAX_VALUE);
+        Button btnComm = new Button("TOPLULUK TARAMASI");
+        btnComm.setMaxWidth(Double.MAX_VALUE); btnComm.setId("btnSecondary");
+        btnComm.setOnAction(e -> controller.runConnectedComponents());
+
+        // --- BÖLÜM 4: SİSTEM & TEST (GÜNCELLENEN KISIM BURASIYDI) ---
+        Label lblSec4 = new Label("SİSTEM & TEST");
+        lblSec4.getStyleClass().add("section-label");
+
+        HBox fileBox = new HBox(5);
+        Button btnSave = new Button("KAYDET"); btnSave.setMaxWidth(Double.MAX_VALUE); btnSave.setId("btnSecondary");
+        Button btnLoad = new Button("YÜKLE"); btnLoad.setMaxWidth(Double.MAX_VALUE); btnLoad.setId("btnSecondary");
+        HBox.setHgrow(btnSave, Priority.ALWAYS); HBox.setHgrow(btnLoad, Priority.ALWAYS);
+        fileBox.getChildren().addAll(btnSave, btnLoad);
+
         btnSave.setOnAction(e -> dataManager.saveGraph(graph, "."));
-
-        Button btnLoad = new Button("Yükle (CSV)");
-        btnLoad.setMaxWidth(Double.MAX_VALUE);
         btnLoad.setOnAction(e -> {
             graph = dataManager.loadGraph(".");
             controller = new GraphController(graph, graphView);
             graphView.drawGraph(graph);
-            System.out.println("Veriler yüklendi ve çizildi.");
         });
 
-        Button btnClear = new Button("TEMİZLE (Sıfırla)");
+        // --- YENİ EKLENEN TEST BUTONU ---
+        Button btnRandom = new Button("🧪 TEST: RASTGELE 50 KİŞİ");
+        btnRandom.setMaxWidth(Double.MAX_VALUE);
+        btnRandom.setId("btnSecondary");
+        btnRandom.setOnAction(e -> controller.generateRandomGraph(50));
+        // -------------------------------
+
+        Button btnClear = new Button("SİSTEMİ İMHA ET (RESET)");
+        btnClear.setId("btnDanger");
         btnClear.setMaxWidth(Double.MAX_VALUE);
-        btnClear.setStyle("-fx-background-color: #D32F2F; -fx-text-fill: white;");
         btnClear.setOnAction(e -> controller.clearGraph());
 
-        // Hepsini Panele Ekle (btnComponents da eklendi)
-        sideBar.getChildren().addAll(
-                lblAdd, txtName, txtAct, txtInt, txtConn, btnAddNode,
-                new Separator(),
-                lblEdge, txtSource, txtTarget, btnAddEdge,
-                new Separator(),
-                lblAlgo, txtStartNode, btnBFS, btnDFS, btnDijkstra, btnAStar, btnCentrality, btnColoring, btnComponents,
-                sep, btnSave, btnLoad, btnClear
+        sidebarContent.getChildren().addAll(
+                title,
+                lblSec1, txtName, statsBox, btnAdd,
+                lblSec2, txtSrc, txtDst, btnLink, btnUnlink,
+                lblSec3, txtStart, gridAlgo, btnCentral, btnColor, btnComm,
+                lblSec4, fileBox, btnRandom, btnClear
         );
 
-        // 3. ANA DÜZEN (BorderPane)
+        // --- SAHNE VE PENCERE AYARLARI (SİLİNEN KISIM BURASIYDI) ---
+        ScrollPane scrollPane = new ScrollPane(sidebarContent);
+        scrollPane.setFitToWidth(true);
+        scrollPane.getStyleClass().add("sidebar");
+        scrollPane.setPrefWidth(280);
+
         BorderPane root = new BorderPane();
-        root.setLeft(sideBar);
+        root.setLeft(scrollPane);
         root.setCenter(graphView);
 
-        // 4. SAHNEYİ BAŞLAT
-        Scene scene = new Scene(root, 1100, 700);
+        Scene scene = new Scene(root, 1100, 750);
+        try { scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("style.css")).toExternalForm()); } catch (Exception e) {}
 
-        graphView.widthProperty().bind(root.widthProperty().subtract(250));
+        graphView.widthProperty().bind(root.widthProperty().subtract(280));
         graphView.heightProperty().bind(root.heightProperty());
+        graphView.widthProperty().addListener(o -> graphView.redraw());
+        graphView.heightProperty().addListener(o -> graphView.redraw());
 
-        graphView.widthProperty().addListener(obs -> graphView.redraw());
-        graphView.heightProperty().addListener(obs -> graphView.redraw());
-
-        primaryStage.setTitle("Sosyal Ağ Analizi - Komuta Merkezi");
+        primaryStage.setTitle("Neo-Graph Intelligence System");
         primaryStage.setScene(scene);
         primaryStage.show();
 
@@ -167,10 +175,8 @@ public class Main extends Application {
             graph = dataManager.loadGraph(".");
             controller = new GraphController(graph, graphView);
             graphView.drawGraph(graph);
-        } catch (Exception e) {
-            System.out.println("Başlangıç verisi bulunamadı, temiz açılıyor.");
-        }
-    }
+        } catch (Exception e) {}
+    } // START METODU BURADA BİTİYOR
 
     private void showAlert(String title, String message) {
         Alert alert = new Alert(Alert.AlertType.INFORMATION);
@@ -180,7 +186,5 @@ public class Main extends Application {
         alert.showAndWait();
     }
 
-    public static void main(String[] args) {
-        launch(args);
-    }
+    public static void main(String[] args) { launch(args); }
 }

@@ -1,23 +1,20 @@
 package com.socialnetwork.socialnetworkanalysis.model;
 
-import java.util.Objects;
-import javafx.scene.paint.Color; // Renk kütüphanesi
+import javafx.scene.paint.Color;
 
 public class Node {
     private String id;
     private String name;
+    private double activity;
+    private double interaction;
+    private double connectionCount;
 
-    // PDF'teki sayısal özellikler
-    private double activity;        // Özellik 1 (Aktiflik)
-    private double interaction;     // Özellik 2 (Etkileşim)
-    private double connectionCount; // Özellik 3 (Bağlantı Sayısı)
+    // Koordinatlar
+    private double x;
+    private double y;
 
-    // Ekranda çizim yaparken kullanacağımız koordinatlar
-    private double x, y;
-
-    // --- YENİ EKLENEN: RENK ÖZELLİĞİ ---
-    // Varsayılan olarak o güzel mavi rengi veriyoruz
-    private Color color = Color.CORNFLOWERBLUE;
+    // Görsel Renk (Renklendirme algoritması için)
+    private Color color;
 
     public Node(String id, String name, double activity, double interaction, double connectionCount) {
         this.id = id;
@@ -25,42 +22,40 @@ public class Node {
         this.activity = activity;
         this.interaction = interaction;
         this.connectionCount = connectionCount;
+        this.color = Color.web("#00e5ff"); // Varsayılan Neon Mavi
     }
 
-    // --- YENİ EKLENEN: RENK GETTER/SETTER ---
-    public Color getColor() {
-        return color;
-    }
-
-    public void setColor(Color color) {
-        this.color = color;
-    }
-    // ----------------------------------------
-
-    // Mevcut Getter Metotları
+    // --- GETTER METODLARI (Okuma) ---
     public String getId() { return id; }
     public String getName() { return name; }
     public double getActivity() { return activity; }
     public double getInteraction() { return interaction; }
     public double getConnectionCount() { return connectionCount; }
-
     public double getX() { return x; }
-    public void setX(double x) { this.x = x; }
     public double getY() { return y; }
+    public Color getColor() { return color; }
+
+    // --- SETTER METODLARI (Yazma - EKSİK OLAN KISIM BURASIYDI) ---
+
+    public void setX(double x) { this.x = x; }
     public void setY(double y) { this.y = y; }
+    public void setColor(Color color) { this.color = color; }
 
-    @Override
-    public String toString() { return name + " (" + id + ")"; }
+    // Hata veren metodlar bunlardı, şimdi ekliyoruz:
+    public void setActivity(double activity) {
+        this.activity = activity;
+    }
 
-    // HashCode ve Equals
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        Node node = (Node) o;
-        return Objects.equals(id, node.id);
+    public void setInteraction(double interaction) {
+        this.interaction = interaction;
+    }
+
+    public void setConnectionCount(double connectionCount) {
+        this.connectionCount = connectionCount;
     }
 
     @Override
-    public int hashCode() { return Objects.hash(id); }
+    public String toString() {
+        return name;
+    }
 }

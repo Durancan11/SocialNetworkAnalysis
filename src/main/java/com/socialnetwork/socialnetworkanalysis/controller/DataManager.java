@@ -9,34 +9,45 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 public class DataManager {
 
-    // --- KAYDETME (SAVE) ---
+    // --- KAYDETME (SAVE) - GÜNCELLENDİ: KOMŞULAR SÜTUNU EKLENDİ ---
     public void saveGraph(Graph graph, String folderPath) {
         try {
             // 1. Düğümler (nodes.csv)
+            // PDF İsteri: Çıktıda komşuluk listesi olmalı.
             BufferedWriter nodeWriter = new BufferedWriter(new FileWriter(folderPath + "/nodes.csv"));
-            nodeWriter.write("id,name,x,y,activity,interaction,connectionCount\n");
+            nodeWriter.write("id,name,x,y,activity,interaction,connectionCount,neighbors\n");
 
             for (Node node : graph.getAllNodes()) {
-                String line = String.format("%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f",
+                // Komşuların ID'lerini topla (Örn: "2;5;9")
+                // CSV'de karışıklık olmasın diye ID'leri noktalı virgül (;) ile ayırıyorum
+                String neighborIds = graph.getNeighbors(node).stream()
+                        .map(edge -> edge.getTarget().getId())
+                        .collect(Collectors.joining(";"));
+
+                if (neighborIds.isEmpty()) neighborIds = "None";
+
+                String line = String.format("%s,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%s",
                         node.getId(), node.getName(),
                         node.getX(), node.getY(),
-                        node.getActivity(), node.getInteraction(), node.getConnectionCount());
+                        node.getActivity(), node.getInteraction(), node.getConnectionCount(),
+                        neighborIds);
                 nodeWriter.write(line + "\n");
             }
             nodeWriter.close();
 
-            // 2. Kenarlar (edges.csv)
+            // 2. Kenarları (edges.csv) - Aynen kalabilir
             BufferedWriter edgeWriter = new BufferedWriter(new FileWriter(folderPath + "/edges.csv"));
-            edgeWriter.write("sourceId,targetId\n");
+            edgeWriter.write("sourceId,targetId,weight\n");
 
             for (Node node : graph.getAllNodes()) {
                 for (Edge edge : graph.getNeighbors(node)) {
                     // Çift kaydı önle
                     if (edge.getSource().getId().compareTo(edge.getTarget().getId()) < 0) {
-                        edgeWriter.write(edge.getSource().getId() + "," + edge.getTarget().getId() + "\n");
+                        edgeWriter.write(edge.getSource().getId() + "," + edge.getTarget().getId() + "," + edge.getWeight() + "\n");
                     }
                 }
             }
@@ -52,7 +63,7 @@ public class DataManager {
     public Graph loadGraph(String folderPath) {
         Graph graph = new Graph();
         Map<String, Node> tempNodes = new HashMap<>();
-        List<Node> loadedNodes = new ArrayList<>(); // Konum kontrolü için liste
+        List<Node> loadedNodes = new ArrayList<>();
 
         try {
             // 1. Düğümleri Oku
@@ -64,7 +75,7 @@ public class DataManager {
 
             while ((line = nodeReader.readLine()) != null) {
                 String[] parts = line.split(",");
-                if (parts.length >= 7) {
+                if (parts.length >= 7) { // En az 7 veri lazım, neighbors opsiyonel okuyoruz
                     String id = parts[0];
                     String name = parts[1];
                     double x = Double.parseDouble(parts[2]);
@@ -75,18 +86,16 @@ public class DataManager {
 
                     Node node = new Node(id, name, activity, interaction, connCount);
 
-                    // --- DÜZELTME 1: Sadece koordinatı olmayanları (0,0) rastgele at ---
-                    // Artık her seferinde yer değiştirmeyecek!
+                    // --- DÜZELTME: Konum Ayarı ---
                     if (x == 0 && y == 0) {
                         setSafeRandomPosition(node, loadedNodes);
                     } else {
-                        // Kayıtlı konumu kullan ama üst üste binmişse hafif kaydır
                         node.setX(x);
                         node.setY(y);
-                        // Eğer bu konumda başka biri varsa, çok az kaydır ki üst üste binmesin
+                        // Çarpışma varsa kaydır
                         while (isOverlapping(node, loadedNodes)) {
-                            node.setX(node.getX() + 20); // Biraz sağa
-                            node.setY(node.getY() + 20); // Biraz aşağı
+                            node.setX(node.getX() + 20);
+                            node.setY(node.getY() + 20);
                         }
                     }
 
@@ -97,7 +106,7 @@ public class DataManager {
             }
             nodeReader.close();
 
-            // 2. Kenarları Oku
+            // 2. Kenarları Oku (Ağırlıklı)
             File edgeFile = new File(folderPath + "/edges.csv");
             if (edgeFile.exists()) {
                 BufferedReader edgeReader = new BufferedReader(new FileReader(edgeFile));
@@ -108,10 +117,24 @@ public class DataManager {
                     if (parts.length >= 2) {
                         String sourceId = parts[0];
                         String targetId = parts[1];
+
+                        // Eğer dosyada ağırlık varsa oku, yoksa hesapla
+                        double weight = 0;
+                        if (parts.length >= 3) {
+                            weight = Double.parseDouble(parts[2]);
+                        }
+
                         Node source = tempNodes.get(sourceId);
                         Node target = tempNodes.get(targetId);
+
                         if (source != null && target != null) {
-                            graph.addEdge(source, target);
+                            if (weight > 0) {
+                                graph.addEdge(source, target, weight);
+                            } else {
+                                // Eski dosyalardan yüklüyorsak formülü burada da çalıştırabiliriz
+                                // Ama şimdilik basit ekle
+                                graph.addEdge(source, target, 1.0);
+                            }
                         }
                     }
                 }
@@ -125,34 +148,23 @@ public class DataManager {
         return graph;
     }
 
-    // GÜVENLİ KONUM BULUCU (Üst üste binmeyi engeller)
     private void setSafeRandomPosition(Node newNode, List<Node> existingNodes) {
-        int maxAttempts = 100; // Sonsuz döngüye girmesin
+        int maxAttempts = 100;
         for (int i = 0; i < maxAttempts; i++) {
-            // Rastgele bir yer seç
             double newX = Math.random() * 600 + 50;
             double newY = Math.random() * 400 + 50;
-
             newNode.setX(newX);
             newNode.setY(newY);
-
-            // Çarpışma var mı kontrol et
-            if (!isOverlapping(newNode, existingNodes)) {
-                return; // Yer güvenli, çık.
-            }
+            if (!isOverlapping(newNode, existingNodes)) return;
         }
     }
 
-    // İki düğüm üst üste mi? (Mesafeye bakar)
     private boolean isOverlapping(Node n1, List<Node> nodes) {
-        double minDistance = 50.0; // Dairelerin birbirine girebileceği en yakın mesafe
+        double minDistance = 50.0;
         for (Node n2 : nodes) {
-            if (n1 == n2) continue; // Kendisiyle kıyaslama
-
+            if (n1 == n2) continue;
             double dist = Math.sqrt(Math.pow(n1.getX() - n2.getX(), 2) + Math.pow(n1.getY() - n2.getY(), 2));
-            if (dist < minDistance) {
-                return true; // Çarpışma var!
-            }
+            if (dist < minDistance) return true;
         }
         return false;
     }
