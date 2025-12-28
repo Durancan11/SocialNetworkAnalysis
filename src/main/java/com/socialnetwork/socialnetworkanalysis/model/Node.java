@@ -8,13 +8,12 @@ public class Node {
     private double activity;
     private double interaction;
     private double connectionCount;
-
-    // Koordinatlar
-    private double x;
-    private double y;
-
-    // Görsel Renk (Renklendirme algoritması için)
+    private double x, y;
     private Color color;
+
+    // --- YENİ EKLENEN: Layout Hesaplaması İçin Geçici Değişkenler ---
+    private double dx; // X eksenindeki değişim
+    private double dy; // Y eksenindeki değişim
 
     public Node(String id, String name, double activity, double interaction, double connectionCount) {
         this.id = id;
@@ -22,10 +21,10 @@ public class Node {
         this.activity = activity;
         this.interaction = interaction;
         this.connectionCount = connectionCount;
-        this.color = Color.web("#00e5ff"); // Varsayılan Neon Mavi
+        this.color = Color.web("#00e5ff");
     }
 
-    // --- GETTER METODLARI (Okuma) ---
+    // Getter & Setter (Eskiler aynı kalıyor)
     public String getId() { return id; }
     public String getName() { return name; }
     public double getActivity() { return activity; }
@@ -35,27 +34,18 @@ public class Node {
     public double getY() { return y; }
     public Color getColor() { return color; }
 
-    // --- SETTER METODLARI (Yazma - EKSİK OLAN KISIM BURASIYDI) ---
-
     public void setX(double x) { this.x = x; }
     public void setY(double y) { this.y = y; }
     public void setColor(Color color) { this.color = color; }
+    public void setActivity(double activity) { this.activity = activity; }
+    public void setInteraction(double interaction) { this.interaction = interaction; }
+    public void setConnectionCount(double connectionCount) { this.connectionCount = connectionCount; }
 
-    // Hata veren metodlar bunlardı, şimdi ekliyoruz:
-    public void setActivity(double activity) {
-        this.activity = activity;
-    }
+    // --- YENİ METODLAR ---
+    public double getDx() { return dx; }
+    public void setDx(double dx) { this.dx = dx; }
+    public double getDy() { return dy; }
+    public void setDy(double dy) { this.dy = dy; }
 
-    public void setInteraction(double interaction) {
-        this.interaction = interaction;
-    }
-
-    public void setConnectionCount(double connectionCount) {
-        this.connectionCount = connectionCount;
-    }
-
-    @Override
-    public String toString() {
-        return name;
-    }
+    @Override public String toString() { return name; }
 }
