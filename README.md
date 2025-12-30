@@ -93,7 +93,7 @@ flowchart TD
 
 ## 🧪 Test ve Performans Sonuçları
 
-Orta ölçekli (50 Düğüm) graf üzerinde yapılan testlerde, başlangıç düğümü **User_17** olarak seçilmiş ve algoritmaların çalışma süreleri mikrosaniye (µs) cinsinden ölçülmüştür.
+Orta ölçekli (50 Düğüm) graf üzerinde yapılan testlerde, başlangıç düğümü **User_7** olarak seçilmiş ve algoritmaların çalışma süreleri mikrosaniye (µs) cinsinden ölçülmüştür.
 
 ### 📊 Performans Tablosu
 
@@ -118,4 +118,4 @@ Orta ölçekli (50 Düğüm) graf üzerinde yapılan testlerde, başlangıç dü
 ![Dijkstra Test](docs/screenshots/test_50_Dijkstra_User_7.png)
 
 **4. A*** **(Sezgisel) Algoritması Sonucu:**
-![Dijkstra Test](docs/screenshots/test_50_A_User_7_User_34.png)
+![A Test](docs/screenshots/test_50_A_User_7_User_34.png)
