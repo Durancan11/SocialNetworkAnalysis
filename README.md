@@ -67,6 +67,7 @@ classDiagram
     Graph "1" *-- "many" Node : Contains
     Graph "1" *-- "many" Edge : Contains
 ```
+## 🔄 Algoritma Akışı (Dijkstra)
 ```mermaid
 flowchart TD
     A[Başla] --> B{Başlangıç ve Bitiş\nDüğümü Var mı?}
@@ -81,7 +82,7 @@ flowchart TD
     J --> G
     H --> K[Bitiş]
 ```
-```markdown
+
 ## 🧪 Test Sonuçları
 
 ### Senaryo 1: 10 Düğüm BFS Testi
@@ -89,4 +90,32 @@ flowchart TD
 
 ### Senaryo 2: 50 Düğüm Merkezilik Analizi
 ![Merkezilik Testi](docs/screenshots/test_50_centrality.png)
-```
+
+## 🧪 Test ve Performans Sonuçları
+
+Orta ölçekli (50 Düğüm) graf üzerinde yapılan testlerde, başlangıç düğümü **User_17** olarak seçilmiş ve algoritmaların çalışma süreleri mikrosaniye (µs) cinsinden ölçülmüştür.
+
+### 📊 Performans Tablosu
+
+| Algoritma             | Çalışma Süresi (µs) | Karmaşıklık Analizi |
+|-----------------------|---------------------|---------------------|
+| **DFS**               | 423 µs              | O(V + E) - En Hızlı |
+| **BFS**               | 684 µs              | O(V + E)            |
+| **Dijkstra**          | 2314 µs             | O(E + V log V)      |
+| **A*** **(Sezgisel)** | 264 µs              | O(E) (Sezgisel)     |
+
+> **Analiz:** DFS, derinlemesine arama yaptığı ve tüm ağacı taramak zorunda kalmadan hedefe (veya sonuna) hızlıca ulaştığı için bu senaryoda en hızlı sonucu vermiştir. Dijkstra, en kısa yolu garanti etmek için tüm ağırlıkları hesapladığından daha uzun sürmüştür.
+
+### 📸 Test Ekran Görüntüleri
+
+**1. BFS Algoritması Sonucu:**
+![BFS Test](docs/screenshots/test_50_BFS_User_7.png)
+
+**2. DFS Algoritması Sonucu:**
+![DFS Test](docs/screenshots/test_50_DFS_User_7.png)
+
+**3. Dijkstra Algoritması Sonucu:**
+![Dijkstra Test](docs/screenshots/test_50_Dijkstra_User_7.png)
+
+**4. A*** **(Sezgisel) Algoritması Sonucu:**
+![Dijkstra Test](docs/screenshots/test_50_A_User_7_User_34.png)
