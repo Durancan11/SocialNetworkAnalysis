@@ -415,9 +415,100 @@ public class GraphController {
         if(c.equals(Color.BROWN)) return "Kahverengi";
         return "Özel Renk";
     }
+    //public void runConnectedComponents() {
+    //    long t=measure(()->new ConnectedComponentsAlgorithm().execute(graph,null));
+    //    showAlert("Topluluk","Tamamlandı. Süre: "+t+" µs");
+    //}
+    // --- BAĞLI BİLEŞENLER (TOPLULUK) TESPİTİ ---
     public void runConnectedComponents() {
-        long t=measure(()->new ConnectedComponentsAlgorithm().execute(graph,null));
-        showAlert("Topluluk","Tamamlandı. Süre: "+t+" µs");
+        if (graph.getAllNodes().isEmpty()) {
+            showAlert("Uyarı", "Analiz edilecek veri yok.");
+            return;
+        }
+
+        // Ziyaret edilenleri takip et
+        Set<Node> visited = new HashSet<>();
+        List<List<Node>> components = new ArrayList<>();
+
+        // BFS/DFS mantığıyla adaları (components) bul
+        for (Node node : graph.getAllNodes()) {
+            if (!visited.contains(node)) {
+                // Yeni bir keşfedilmemiş ada bulduk!
+                List<Node> component = new ArrayList<>();
+                findComponentBFS(node, visited, component);
+                components.add(component);
+            }
+        }
+
+        // Renk Paleti (Her topluluk için farklı renk)
+        Color[] palette = {
+                Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE,
+                Color.PURPLE, Color.CYAN, Color.MAGENTA, Color.BROWN
+        };
+
+        // Görseli Güncelle (Boyama)
+        for (int i = 0; i < components.size(); i++) {
+            Color c = palette[i % palette.length];
+            for (Node n : components.get(i)) {
+                n.setColor(c);
+            }
+        }
+        view.drawGraph(graph);
+
+        // RAPOR OLUŞTUR
+        StringBuilder report = new StringBuilder();
+        report.append("🧩 TOPLULUK ANALİZİ SONUCU\n");
+        report.append("Tespit Edilen Ayrık Topluluk Sayısı: ").append(components.size()).append("\n");
+        report.append("──────────────────────────────────────────\n");
+
+        for (int i = 0; i < components.size(); i++) {
+            report.append("GRUP ").append(i + 1).append(" (").append(getColorName(palette[i % palette.length])).append("): ");
+
+            List<String> names = new ArrayList<>();
+            for (Node n : components.get(i)) names.add(n.getName());
+
+            report.append(String.join(", ", names)).append("\n");
+        }
+
+        // Sonucu Göster
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Topluluk Tespiti Raporu");
+        alert.setHeaderText(components.size() + " Adet Ayrık Topluluk Bulundu");
+
+        TextArea textArea = new TextArea(report.toString());
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
+        GridPane content = new GridPane();
+        content.setMaxWidth(Double.MAX_VALUE);
+        content.add(textArea, 0, 0);
+
+        alert.getDialogPane().setContent(content);
+        alert.showAndWait();
+    }
+
+    // Yardımcı Metod: Bir düğümden başlayıp bağlı olan herkesi bulur (BFS)
+    private void findComponentBFS(Node startNode, Set<Node> visited, List<Node> component) {
+        Queue<Node> queue = new LinkedList<>();
+        queue.add(startNode);
+        visited.add(startNode);
+
+        while(!queue.isEmpty()) {
+            Node current = queue.poll();
+            component.add(current);
+
+            for(Edge edge : graph.getNeighbors(current)) {
+                Node neighbor = edge.getTarget();
+                if(!visited.contains(neighbor)) {
+                    visited.add(neighbor);
+                    queue.add(neighbor);
+                }
+            }
+        }
     }
     public void clearGraph() { graph.clear(); view.drawGraph(graph); showAlert("Bilgi", "Sistem sıfırlandı."); }
 
