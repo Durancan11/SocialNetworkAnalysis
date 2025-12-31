@@ -7,6 +7,11 @@ import javafx.scene.control.Alert;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.paint.Color;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.Priority;
 
 public class GraphController {
     private Graph graph;
@@ -218,9 +223,131 @@ public class GraphController {
         StringBuilder sb=new StringBuilder("EN POPÜLER 5:\n"); for(Node n:top) sb.append("- "+n.getName()+" ("+n.getConnectionCount()+")\n");
         sb.append("\nSüre: "+t+" µs"); showAlert("Merkezilik",sb.toString());
     }
+    //public void runWelshPowell() {
+    //    long t=measure(()->new WelshPowellAlgorithm().execute(graph,null));
+    //    view.drawGraph(graph); showAlert("Renklendirme","Tamamlandı. Süre: "+t+" µs");
+    //}
+    // --- WELSH-POWELL RENKLENDİRME ALGORİTMASI ---
     public void runWelshPowell() {
-        long t=measure(()->new WelshPowellAlgorithm().execute(graph,null));
-        view.drawGraph(graph); showAlert("Renklendirme","Tamamlandı. Süre: "+t+" µs");
+        if (graph.getAllNodes().isEmpty()) {
+            showAlert("Uyarı", "Graf boş, boyanacak düğüm yok.");
+            return;
+        }
+        //Yapay zeka desteği alındı
+        // Tüm düğümleri derecelerine (komşu sayılarına) göre BÜYÜKTEN KÜÇÜĞE sırala
+        List<Node> sortedNodes = new ArrayList<>(graph.getAllNodes());
+
+        sortedNodes.sort((n1, n2) -> Integer.compare(
+                graph.getNeighbors(n2).size(),
+                graph.getNeighbors(n1).size()
+        ));
+
+        // Renk paleti
+        Color[] palette = {
+                Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE,
+                Color.PURPLE, Color.CYAN, Color.MAGENTA, Color.BROWN,
+                Color.PINK, Color.LIME, Color.GOLD, Color.TEAL
+        };
+
+        Map<Node, Integer> nodeColors = new HashMap<>();
+        for (Node n : sortedNodes) nodeColors.put(n, -1);
+
+        int colorIndex = 0;
+
+        // 2. Algoritma Döngüsü
+        for (int i = 0; i < sortedNodes.size(); i++) {
+            Node highestNode = sortedNodes.get(i);
+
+            if (nodeColors.get(highestNode) == -1) {
+                int currentColor = colorIndex;
+                nodeColors.put(highestNode, currentColor);
+                highestNode.setColor(palette[currentColor % palette.length]);
+
+                for (int j = i + 1; j < sortedNodes.size(); j++) {
+                    Node candidate = sortedNodes.get(j);
+
+                    if (nodeColors.get(candidate) == -1) {
+                        boolean isConnectedToCurrentColor = false;
+
+                        // BURADA DA graph.getNeighbors() KULLANIYORUZ
+                        for (Edge edge : graph.getNeighbors(candidate)) {
+                            Node neighbor = edge.getTarget();
+                            if (nodeColors.get(neighbor) == currentColor) {
+                                isConnectedToCurrentColor = true;
+                                break;
+                            }
+                        }
+
+                        if (!isConnectedToCurrentColor) {
+                            nodeColors.put(candidate, currentColor);
+                            candidate.setColor(palette[currentColor % palette.length]);
+                        }
+                    }
+                }
+                colorIndex++;
+            }
+        }
+
+        // 3. Görseli Güncelle
+        view.drawGraph(graph);
+
+        // 4. RAPOR OLUŞTUR
+        showColoringTable(nodeColors, palette, colorIndex);
+    }
+
+    // boyama tablosu
+    private void showColoringTable(Map<Node, Integer> mapping, Color[] palette, int totalColors) {
+        StringBuilder report = new StringBuilder();
+        report.append("🎨 KROMATİK SAYI (Kullanılan Renk Sayısı): ").append(totalColors).append("\n");
+        report.append("──────────────────────────────────────────\n");
+
+        for (int c = 0; c < totalColors; c++) {
+            String colorName = getColorName(palette[c % palette.length]);
+            report.append(String.format("RENK %d (%s): ", c + 1, colorName));
+
+            List<String> nodesInThisColor = new ArrayList<>();
+            for (Map.Entry<Node, Integer> entry : mapping.entrySet()) {
+                if (entry.getValue() == c) {
+                    nodesInThisColor.add(entry.getKey().getName());
+                }
+            }
+            report.append(String.join(", ", nodesInThisColor)).append("\n");
+        }
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Welsh-Powell Boyama Tablosu");
+        alert.setHeaderText("Algoritma Tamamlandı");
+
+        // TextArea Import edildiği için artık çalışacak
+        TextArea textArea = new TextArea(report.toString());
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+
+        // Layout ayarı
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
+
+        GridPane content = new GridPane();
+        content.setMaxWidth(Double.MAX_VALUE);
+        content.add(textArea, 0, 0);
+
+        alert.getDialogPane().setContent(content);
+        alert.showAndWait();
+    }
+
+    // Renklerin isimlerini yazıya dökmek için basit yardımcı
+    private String getColorName(Color c) {
+        if(c.equals(Color.RED)) return "Kırmızı";
+        if(c.equals(Color.BLUE)) return "Mavi";
+        if(c.equals(Color.GREEN)) return "Yeşil";
+        if(c.equals(Color.ORANGE)) return "Turuncu";
+        if(c.equals(Color.PURPLE)) return "Mor";
+        if(c.equals(Color.CYAN)) return "Cam Göbeği";
+        if(c.equals(Color.MAGENTA)) return "Eflatun";
+        if(c.equals(Color.BROWN)) return "Kahverengi";
+        return "Özel Renk";
     }
     public void runConnectedComponents() {
         long t=measure(()->new ConnectedComponentsAlgorithm().execute(graph,null));

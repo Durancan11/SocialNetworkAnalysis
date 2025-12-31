@@ -2,6 +2,7 @@
 
 **Ders:** Yazılım Laboratuvarı I
 **Dönem:** 2025-2026 Güz
+
 **Grup Üyeleri:**
 * Duran Can Demirezen - 211307037
 * Yaman Ceylan - 181307031
@@ -72,7 +73,7 @@ classDiagram
 flowchart TD
     A[Başla] --> B{Başlangıç ve Bitiş\nDüğümü Var mı?}
     B -- Hayır --> C[Hata Mesajı Göster]
-    C -- Evet --> D[Dijkstra Algoritmasını Çalıştır]
+    B -- Evet --> D[Dijkstra Algoritmasını Çalıştır]
     D --> E[Mesafeleri Sonsuz Yap]
     E --> F[Başlangıç Mesafesi = 0]
     F --> G{Kuyruk Boş mu?}
