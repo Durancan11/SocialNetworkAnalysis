@@ -120,3 +120,11 @@ Orta ölçekli (50 Düğüm) graf üzerinde yapılan testlerde, başlangıç dü
 
 **4. A*** **(Sezgisel) Algoritması Sonucu:**
 ![A Test](docs/screenshots/test_50_A_User_7_User_34.png)
+
+## 🧪 Topluluk Tespiti (Ayrık Ada) Test Sonuçları
+
+### Senaryo 1: 3 Adet Ayrık (Ada) Topluluk
+![BFS Testi](docs/screenshots/test_community_detection_3.png)
+
+### Senaryo 2: 2 Adet Ayrık (Ada) Topluluk
+![Merkezilik Testi](docs/screenshots/test_community_detection_2.png)
