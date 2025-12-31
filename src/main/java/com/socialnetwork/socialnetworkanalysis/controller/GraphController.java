@@ -217,11 +217,77 @@ public class GraphController {
         Node n1=findNodeByName(s), n2=findNodeByName(t); if(n1==null||n2==null){showAlert("Hata","Eksik düğüm");return;}
         long tm=measure(()->new AStarAlgorithm().findPath(graph,n1,n2)); showAlert("A*","Süre: "+tm+" µs");
     }
+    //public void runCentrality() {
+    //    long t=measure(()->new DegreeCentralityAlgorithm().execute(graph,null));
+    //    List<Node> top=graph.getAllNodes().stream().sorted((a,b)->Double.compare(b.getConnectionCount(),a.getConnectionCount())).limit(5).collect(Collectors.toList());
+    //    StringBuilder sb=new StringBuilder("EN POPÜLER 5:\n"); for(Node n:top) sb.append("- "+n.getName()+" ("+n.getConnectionCount()+")\n");
+    //    sb.append("\nSüre: "+t+" µs"); showAlert("Merkezilik",sb.toString());
+    //}
+    // --- MERKEZİLİK ANALİZİ (DEGREE CENTRALITY & TOP 5 TABLE) ---
     public void runCentrality() {
-        long t=measure(()->new DegreeCentralityAlgorithm().execute(graph,null));
-        List<Node> top=graph.getAllNodes().stream().sorted((a,b)->Double.compare(b.getConnectionCount(),a.getConnectionCount())).limit(5).collect(Collectors.toList());
-        StringBuilder sb=new StringBuilder("EN POPÜLER 5:\n"); for(Node n:top) sb.append("- "+n.getName()+" ("+n.getConnectionCount()+")\n");
-        sb.append("\nSüre: "+t+" µs"); showAlert("Merkezilik",sb.toString());
+        if (graph.getAllNodes().isEmpty()) {
+            showAlert("Uyarı", "Analiz edilecek veri yok.");
+            return;
+        }
+
+        // 1. Düğümleri Bağlantı Sayısına (Derece) göre sırala (Çoktan aza)
+        List<Node> sortedNodes = new ArrayList<>(graph.getAllNodes());
+        sortedNodes.sort((n1, n2) -> Integer.compare(
+                graph.getNeighbors(n2).size(),
+                graph.getNeighbors(n1).size()
+        ));
+
+        // 2. Görsel Efekt: En güçlüleri vurgula
+        // Önce herkesi sıfırla (Varsayılan renk)
+        for(Node n : graph.getAllNodes()) n.setColor(Color.web("#3498db")); // Varsayılan Mavi
+
+        // En güçlü 5 kişiyi Altın Sarısı yap
+        int topLimit = Math.min(5, sortedNodes.size());
+        for(int i=0; i<topLimit; i++) {
+            sortedNodes.get(i).setColor(Color.GOLD);
+        }
+        view.drawGraph(graph); // Grafiği güncelle
+
+        // 3. RAPOR OLUŞTUR (PDF İsteri: Top 5 Tablosu)
+        StringBuilder report = new StringBuilder();
+        report.append("🏆 EN ETKİLİ 5 KULLANICI (DEGREE CENTRALITY)\n");
+        report.append("──────────────────────────────────────────\n");
+        report.append(String.format("%-5s %-15s %-10s\n", "SIRA", "KULLANICI ADI", "DERECE (SKOR)"));
+        report.append("──────────────────────────────────────────\n");
+
+        for (int i = 0; i < topLimit; i++) {
+            Node n = sortedNodes.get(i);
+            int degree = graph.getNeighbors(n).size();
+
+            // Tablo formatında ekle
+            report.append(String.format("%-5d %-15s %-10d\n", (i+1), n.getName(), degree));
+        }
+
+        // Eğer 5'ten fazla kişi varsa dipnot düş
+        if (sortedNodes.size() > 5) {
+            report.append("\n... ve ").append(sortedNodes.size() - 5).append(" kullanıcı daha.");
+        }
+
+        // 4. Sonucu Göster
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Merkezilik Analizi Raporu");
+        alert.setHeaderText("Ağın Liderleri Belirlendi");
+
+        TextArea textArea = new TextArea(report.toString());
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+
+        // Düzen (Layout)
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
+        GridPane content = new GridPane();
+        content.setMaxWidth(Double.MAX_VALUE);
+        content.add(textArea, 0, 0);
+
+        alert.getDialogPane().setContent(content);
+        alert.showAndWait();
     }
     //public void runWelshPowell() {
     //    long t=measure(()->new WelshPowellAlgorithm().execute(graph,null));
