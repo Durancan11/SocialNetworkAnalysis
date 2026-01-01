@@ -7,6 +7,11 @@ import javafx.scene.control.Alert;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.*;
+import javafx.scene.layout.GridPane;
+import javafx.scene.paint.Color;
+import javafx.scene.control.TextArea;
+import javafx.scene.layout.Priority;
 
 public class GraphController {
     private Graph graph;
@@ -212,19 +217,298 @@ public class GraphController {
         Node n1=findNodeByName(s), n2=findNodeByName(t); if(n1==null||n2==null){showAlert("Hata","Eksik düğüm");return;}
         long tm=measure(()->new AStarAlgorithm().findPath(graph,n1,n2)); showAlert("A*","Süre: "+tm+" µs");
     }
+    //public void runCentrality() {
+    //    long t=measure(()->new DegreeCentralityAlgorithm().execute(graph,null));
+    //    List<Node> top=graph.getAllNodes().stream().sorted((a,b)->Double.compare(b.getConnectionCount(),a.getConnectionCount())).limit(5).collect(Collectors.toList());
+    //    StringBuilder sb=new StringBuilder("EN POPÜLER 5:\n"); for(Node n:top) sb.append("- "+n.getName()+" ("+n.getConnectionCount()+")\n");
+    //    sb.append("\nSüre: "+t+" µs"); showAlert("Merkezilik",sb.toString());
+    //}
+    // --- MERKEZİLİK ANALİZİ (DEGREE CENTRALITY & TOP 5 TABLE) ---
     public void runCentrality() {
-        long t=measure(()->new DegreeCentralityAlgorithm().execute(graph,null));
-        List<Node> top=graph.getAllNodes().stream().sorted((a,b)->Double.compare(b.getConnectionCount(),a.getConnectionCount())).limit(5).collect(Collectors.toList());
-        StringBuilder sb=new StringBuilder("EN POPÜLER 5:\n"); for(Node n:top) sb.append("- "+n.getName()+" ("+n.getConnectionCount()+")\n");
-        sb.append("\nSüre: "+t+" µs"); showAlert("Merkezilik",sb.toString());
+        if (graph.getAllNodes().isEmpty()) {
+            showAlert("Uyarı", "Analiz edilecek veri yok.");
+            return;
+        }
+
+        // 1. Düğümleri Bağlantı Sayısına (Derece) göre sırala (Çoktan aza)
+        List<Node> sortedNodes = new ArrayList<>(graph.getAllNodes());
+        sortedNodes.sort((n1, n2) -> Integer.compare(
+                graph.getNeighbors(n2).size(),
+                graph.getNeighbors(n1).size()
+        ));
+
+        // 2. Görsel Efekt: En güçlüleri vurgula
+        // Önce herkesi sıfırla (Varsayılan renk)
+        for(Node n : graph.getAllNodes()) n.setColor(Color.web("#3498db")); // Varsayılan Mavi
+
+        // En güçlü 5 kişiyi Altın Sarısı yap
+        int topLimit = Math.min(5, sortedNodes.size());
+        for(int i=0; i<topLimit; i++) {
+            sortedNodes.get(i).setColor(Color.GOLD);
+        }
+        view.drawGraph(graph); // Grafiği güncelle
+
+        // 3. RAPOR OLUŞTUR (PDF İsteri: Top 5 Tablosu)
+        StringBuilder report = new StringBuilder();
+        report.append("🏆 EN ETKİLİ 5 KULLANICI (DEGREE CENTRALITY)\n");
+        report.append("──────────────────────────────────────────\n");
+        report.append(String.format("%-5s %-15s %-10s\n", "SIRA", "KULLANICI ADI", "DERECE (SKOR)"));
+        report.append("──────────────────────────────────────────\n");
+
+        for (int i = 0; i < topLimit; i++) {
+            Node n = sortedNodes.get(i);
+            int degree = graph.getNeighbors(n).size();
+
+            // Tablo formatında ekle
+            report.append(String.format("%-5d %-15s %-10d\n", (i+1), n.getName(), degree));
+        }
+
+        // Eğer 5'ten fazla kişi varsa dipnot düş
+        if (sortedNodes.size() > 5) {
+            report.append("\n... ve ").append(sortedNodes.size() - 5).append(" kullanıcı daha.");
+        }
+
+        // 4. Sonucu Göster
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Merkezilik Analizi Raporu");
+        alert.setHeaderText("Ağın Liderleri Belirlendi");
+
+        TextArea textArea = new TextArea(report.toString());
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+
+        // Düzen (Layout)
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
+        GridPane content = new GridPane();
+        content.setMaxWidth(Double.MAX_VALUE);
+        content.add(textArea, 0, 0);
+
+        alert.getDialogPane().setContent(content);
+        alert.showAndWait();
     }
+    //public void runWelshPowell() {
+    //    long t=measure(()->new WelshPowellAlgorithm().execute(graph,null));
+    //    view.drawGraph(graph); showAlert("Renklendirme","Tamamlandı. Süre: "+t+" µs");
+    //}
+    // --- WELSH-POWELL RENKLENDİRME ALGORİTMASI ---
     public void runWelshPowell() {
-        long t=measure(()->new WelshPowellAlgorithm().execute(graph,null));
-        view.drawGraph(graph); showAlert("Renklendirme","Tamamlandı. Süre: "+t+" µs");
+        if (graph.getAllNodes().isEmpty()) {
+            showAlert("Uyarı", "Graf boş, boyanacak düğüm yok.");
+            return;
+        }
+        //Yapay zeka desteği alındı
+        // Tüm düğümleri derecelerine (komşu sayılarına) göre BÜYÜKTEN KÜÇÜĞE sırala
+        List<Node> sortedNodes = new ArrayList<>(graph.getAllNodes());
+
+        sortedNodes.sort((n1, n2) -> Integer.compare(
+                graph.getNeighbors(n2).size(),
+                graph.getNeighbors(n1).size()
+        ));
+
+        // Renk paleti
+        Color[] palette = {
+                Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE,
+                Color.PURPLE, Color.CYAN, Color.MAGENTA, Color.BROWN,
+                Color.PINK, Color.LIME, Color.GOLD, Color.TEAL
+        };
+
+        Map<Node, Integer> nodeColors = new HashMap<>();
+        for (Node n : sortedNodes) nodeColors.put(n, -1);
+
+        int colorIndex = 0;
+
+        // 2. Algoritma Döngüsü
+        for (int i = 0; i < sortedNodes.size(); i++) {
+            Node highestNode = sortedNodes.get(i);
+
+            if (nodeColors.get(highestNode) == -1) {
+                int currentColor = colorIndex;
+                nodeColors.put(highestNode, currentColor);
+                highestNode.setColor(palette[currentColor % palette.length]);
+
+                for (int j = i + 1; j < sortedNodes.size(); j++) {
+                    Node candidate = sortedNodes.get(j);
+
+                    if (nodeColors.get(candidate) == -1) {
+                        boolean isConnectedToCurrentColor = false;
+
+                        // BURADA DA graph.getNeighbors() KULLANIYORUZ
+                        for (Edge edge : graph.getNeighbors(candidate)) {
+                            Node neighbor = edge.getTarget();
+                            if (nodeColors.get(neighbor) == currentColor) {
+                                isConnectedToCurrentColor = true;
+                                break;
+                            }
+                        }
+
+                        if (!isConnectedToCurrentColor) {
+                            nodeColors.put(candidate, currentColor);
+                            candidate.setColor(palette[currentColor % palette.length]);
+                        }
+                    }
+                }
+                colorIndex++;
+            }
+        }
+
+        // 3. Görseli Güncelle
+        view.drawGraph(graph);
+
+        // 4. RAPOR OLUŞTUR
+        showColoringTable(nodeColors, palette, colorIndex);
     }
+
+    // boyama tablosu
+    private void showColoringTable(Map<Node, Integer> mapping, Color[] palette, int totalColors) {
+        StringBuilder report = new StringBuilder();
+        report.append("🎨 KROMATİK SAYI (Kullanılan Renk Sayısı): ").append(totalColors).append("\n");
+        report.append("──────────────────────────────────────────\n");
+
+        for (int c = 0; c < totalColors; c++) {
+            String colorName = getColorName(palette[c % palette.length]);
+            report.append(String.format("RENK %d (%s): ", c + 1, colorName));
+
+            List<String> nodesInThisColor = new ArrayList<>();
+            for (Map.Entry<Node, Integer> entry : mapping.entrySet()) {
+                if (entry.getValue() == c) {
+                    nodesInThisColor.add(entry.getKey().getName());
+                }
+            }
+            report.append(String.join(", ", nodesInThisColor)).append("\n");
+        }
+
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Welsh-Powell Boyama Tablosu");
+        alert.setHeaderText("Algoritma Tamamlandı");
+
+        // TextArea Import edildiği için artık çalışacak
+        TextArea textArea = new TextArea(report.toString());
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+
+        // Layout ayarı
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
+
+        GridPane content = new GridPane();
+        content.setMaxWidth(Double.MAX_VALUE);
+        content.add(textArea, 0, 0);
+
+        alert.getDialogPane().setContent(content);
+        alert.showAndWait();
+    }
+
+    // Renklerin isimlerini yazıya dökmek için basit yardımcı
+    private String getColorName(Color c) {
+        if(c.equals(Color.RED)) return "Kırmızı";
+        if(c.equals(Color.BLUE)) return "Mavi";
+        if(c.equals(Color.GREEN)) return "Yeşil";
+        if(c.equals(Color.ORANGE)) return "Turuncu";
+        if(c.equals(Color.PURPLE)) return "Mor";
+        if(c.equals(Color.CYAN)) return "Cam Göbeği";
+        if(c.equals(Color.MAGENTA)) return "Eflatun";
+        if(c.equals(Color.BROWN)) return "Kahverengi";
+        return "Özel Renk";
+    }
+    //public void runConnectedComponents() {
+    //    long t=measure(()->new ConnectedComponentsAlgorithm().execute(graph,null));
+    //    showAlert("Topluluk","Tamamlandı. Süre: "+t+" µs");
+    //}
+    // --- BAĞLI BİLEŞENLER (TOPLULUK) TESPİTİ ---
     public void runConnectedComponents() {
-        long t=measure(()->new ConnectedComponentsAlgorithm().execute(graph,null));
-        showAlert("Topluluk","Tamamlandı. Süre: "+t+" µs");
+        if (graph.getAllNodes().isEmpty()) {
+            showAlert("Uyarı", "Analiz edilecek veri yok.");
+            return;
+        }
+
+        // Ziyaret edilenleri takip et
+        Set<Node> visited = new HashSet<>();
+        List<List<Node>> components = new ArrayList<>();
+
+        // BFS/DFS mantığıyla adaları (components) bul
+        for (Node node : graph.getAllNodes()) {
+            if (!visited.contains(node)) {
+                // Yeni bir keşfedilmemiş ada bulduk!
+                List<Node> component = new ArrayList<>();
+                findComponentBFS(node, visited, component);
+                components.add(component);
+            }
+        }
+
+        // Renk Paleti (Her topluluk için farklı renk)
+        Color[] palette = {
+                Color.RED, Color.BLUE, Color.GREEN, Color.ORANGE,
+                Color.PURPLE, Color.CYAN, Color.MAGENTA, Color.BROWN
+        };
+
+        // Görseli Güncelle (Boyama)
+        for (int i = 0; i < components.size(); i++) {
+            Color c = palette[i % palette.length];
+            for (Node n : components.get(i)) {
+                n.setColor(c);
+            }
+        }
+        view.drawGraph(graph);
+
+        // RAPOR OLUŞTUR
+        StringBuilder report = new StringBuilder();
+        report.append("🧩 TOPLULUK ANALİZİ SONUCU\n");
+        report.append("Tespit Edilen Ayrık Topluluk Sayısı: ").append(components.size()).append("\n");
+        report.append("──────────────────────────────────────────\n");
+
+        for (int i = 0; i < components.size(); i++) {
+            report.append("GRUP ").append(i + 1).append(" (").append(getColorName(palette[i % palette.length])).append("): ");
+
+            List<String> names = new ArrayList<>();
+            for (Node n : components.get(i)) names.add(n.getName());
+
+            report.append(String.join(", ", names)).append("\n");
+        }
+
+        // Sonucu Göster
+        Alert alert = new Alert(Alert.AlertType.INFORMATION);
+        alert.setTitle("Topluluk Tespiti Raporu");
+        alert.setHeaderText(components.size() + " Adet Ayrık Topluluk Bulundu");
+
+        TextArea textArea = new TextArea(report.toString());
+        textArea.setEditable(false);
+        textArea.setWrapText(true);
+        textArea.setMaxWidth(Double.MAX_VALUE);
+        textArea.setMaxHeight(Double.MAX_VALUE);
+
+        GridPane.setVgrow(textArea, Priority.ALWAYS);
+        GridPane.setHgrow(textArea, Priority.ALWAYS);
+        GridPane content = new GridPane();
+        content.setMaxWidth(Double.MAX_VALUE);
+        content.add(textArea, 0, 0);
+
+        alert.getDialogPane().setContent(content);
+        alert.showAndWait();
+    }
+
+    // Yardımcı Metod: Bir düğümden başlayıp bağlı olan herkesi bulur (BFS)
+    private void findComponentBFS(Node startNode, Set<Node> visited, List<Node> component) {
+        Queue<Node> queue = new LinkedList<>();
+        queue.add(startNode);
+        visited.add(startNode);
+
+        while(!queue.isEmpty()) {
+            Node current = queue.poll();
+            component.add(current);
+
+            for(Edge edge : graph.getNeighbors(current)) {
+                Node neighbor = edge.getTarget();
+                if(!visited.contains(neighbor)) {
+                    visited.add(neighbor);
+                    queue.add(neighbor);
+                }
+            }
+        }
     }
     public void clearGraph() { graph.clear(); view.drawGraph(graph); showAlert("Bilgi", "Sistem sıfırlandı."); }
 

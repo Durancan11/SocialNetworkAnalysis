@@ -11,6 +11,12 @@ import javafx.scene.control.*;
 import javafx.scene.layout.*;
 import javafx.stage.Stage;
 import java.util.Objects;
+import javafx.scene.image.WritableImage;
+import javafx.scene.SnapshotParameters;
+import javafx.embed.swing.SwingFXUtils;
+import javax.imageio.ImageIO;
+import java.io.File;
+import java.io.IOException;
 
 public class Main extends Application {
 
@@ -120,8 +126,49 @@ public class Main extends Application {
         HBox fileBox = new HBox(5);
         Button btnSave = new Button("Kaydet"); btnSave.setMaxWidth(Double.MAX_VALUE); btnSave.setId("btnSecondary");
         Button btnLoad = new Button("Yükle"); btnLoad.setMaxWidth(Double.MAX_VALUE); btnLoad.setId("btnSecondary");
+        Button btnSnapshot = new Button("Görüntüyü İndir");
+        btnSnapshot.setId("btnSecondary");
+        btnSnapshot.setMaxWidth(Double.MAX_VALUE);
+        // Geminiden yardım alındı bu kısımda
+        btnSnapshot.setOnAction(e -> {
+            // 1. o anki görüntüsünü yakala
+            WritableImage image = graphView.snapshot(new SnapshotParameters(), null);
+
+            // 2. Hedef Klasörü Belirle (docs/screenshots)
+            String folderPath = "docs" + File.separator + "screenshots";
+            File directory = new File(folderPath);
+
+            // 3. Eğer klasör yoksa OLUŞTUR (Güvenlik Önlemi)
+            if (!directory.exists()) {
+                directory.mkdirs();
+            }
+
+            // 4. Dosya ismini ve yolunu ayarla
+            File file = new File(directory, "graph_export_" + System.currentTimeMillis() + ".png");
+
+            try {
+                // 5. Dosyayı diske yaz
+                ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+
+                // 6. Kullanıcıya haber ver
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("Başarılı");
+                alert.setHeaderText("Görüntü Kaydedildi!");
+                alert.setContentText("Dosya şu konuma kaydedildi:\n" + file.getAbsolutePath());
+                alert.showAndWait();
+
+            } catch (IOException ex) {
+                Alert alert = new Alert(Alert.AlertType.ERROR);
+                alert.setTitle("Hata");
+                alert.setHeaderText("Kaydedilemedi");
+                alert.setContentText(ex.getMessage());
+                alert.showAndWait();
+            }
+        });
+
         HBox.setHgrow(btnSave, Priority.ALWAYS); HBox.setHgrow(btnLoad, Priority.ALWAYS);
         fileBox.getChildren().addAll(btnSave, btnLoad);
+        HBox snapshotBox = new HBox(btnSnapshot);
 
         btnSave.setOnAction(e -> dataManager.saveGraph(graph, "."));
         btnLoad.setOnAction(e -> {
@@ -161,7 +208,7 @@ public class Main extends Application {
                 lblSec1, txtName, statsBox, btnAdd,
                 lblSec2, txtSrc, txtDst, btnLink, btnUnlink,
                 lblSec3, txtStart, gridAlgo, btnCentral, btnColor, btnComm,
-                lblSec4, fileBox, testBox, btnLayout, btnClear
+                lblSec4, fileBox, btnSnapshot, testBox, btnLayout, btnClear
         );
 
         // --- SAHNE AYARLARI ---
