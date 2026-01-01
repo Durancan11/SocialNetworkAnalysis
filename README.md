@@ -128,8 +128,3 @@ Orta ölçekli (50 Düğüm) graf üzerinde yapılan testlerde, başlangıç dü
 
 ### Senaryo 2: 2 Adet Ayrık (Ada) Topluluk
 ![Merkezilik Testi](docs/screenshots/test_community_detection_2.png)
-
-## 6. Sonuç ve Tartışma
-**Başarılar:** Proje, dinamik ağırlık hesaplama ve 50+ düğümde performanslı çalışma hedeflerini başarıyla tamamlamıştır.
-**Sınırlılıklar:** Çok büyük veri setlerinde (10.000+ düğüm) Canvas çizim performansı düşebilir.
-**Geliştirmeler:** İleride veritabanı entegrasyonu ve 3D görselleştirme eklenebilir.
