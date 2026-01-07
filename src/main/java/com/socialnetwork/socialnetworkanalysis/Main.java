@@ -2,13 +2,18 @@ package com.socialnetwork.socialnetworkanalysis;
 
 import com.socialnetwork.socialnetworkanalysis.controller.DataManager;
 import com.socialnetwork.socialnetworkanalysis.controller.GraphController;
+import com.socialnetwork.socialnetworkanalysis.model.Edge;
 import com.socialnetwork.socialnetworkanalysis.model.Graph;
+import com.socialnetwork.socialnetworkanalysis.model.Node;
 import com.socialnetwork.socialnetworkanalysis.view.GraphView;
 import javafx.application.Application;
 import javafx.geometry.Insets;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.layout.*;
+import javafx.scene.paint.Color;
+import javafx.scene.transform.Transform;
+import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 import java.util.Objects;
 import javafx.scene.image.WritableImage;
@@ -35,7 +40,7 @@ public class Main extends Application {
 
         // --- SOL PANEL (SIDEBAR) ---
         VBox sidebarContent = new VBox(15);
-        sidebarContent.setPadding(new Insets(15)); // Biraz boşluk iyidir
+        sidebarContent.setPadding(new Insets(15));
 
         // LOGO / BAŞLIK
         Label title = new Label("Graph Analysis");
@@ -55,7 +60,7 @@ public class Main extends Application {
         HBox.setHgrow(txtAct, Priority.ALWAYS); HBox.setHgrow(txtInt, Priority.ALWAYS); HBox.setHgrow(txtConn, Priority.ALWAYS);
 
         Button btnAdd = new Button("+ Sisteme Ekle");
-        btnAdd.setId("btnAdd"); // Yeşil Buton
+        btnAdd.setId("btnAdd");
         btnAdd.setMaxWidth(Double.MAX_VALUE);
         btnAdd.setOnAction(e -> {
             try {
@@ -71,10 +76,50 @@ public class Main extends Application {
         TextField txtSrc = new TextField(); txtSrc.setPromptText("Kaynak Kullanıcı");
         TextField txtDst = new TextField(); txtDst.setPromptText("Hedef Kullanıcı");
 
+        // --- AKILLI BAĞLANTI BUTONU ---
         Button btnLink = new Button("Bağlantı Kur");
         btnLink.setId("btnSecondary");
         btnLink.setMaxWidth(Double.MAX_VALUE);
-        btnLink.setOnAction(e -> controller.addEdge(txtSrc.getText(), txtDst.getText()));
+
+        btnLink.setOnAction(e -> {
+            String srcName = txtSrc.getText().trim();
+            String dstName = txtDst.getText().trim();
+
+            if(srcName.isEmpty() || dstName.isEmpty()) {
+                showAlert("Uyarı", "Lütfen her iki kullanıcı adını da giriniz.");
+                return;
+            }
+
+            // 1. Kullanıcılar var mı diye kontrol et
+            Node srcNode = null;
+            Node dstNode = null;
+            for(Node n : graph.getAllNodes()) {
+                if(n.getName().equalsIgnoreCase(srcName)) srcNode = n;
+                if(n.getName().equalsIgnoreCase(dstName)) dstNode = n;
+            }
+
+            if(srcNode == null || dstNode == null) {
+                showAlert("Hata", "Kullanıcılardan biri veya ikisi bulunamadı!");
+                return;
+            }
+
+            // 2. Bağlantı zaten var mı diye kontrol et
+            boolean exists = false;
+            for(Edge edge : graph.getNeighbors(srcNode)) {
+                if(edge.getTarget() == dstNode) {
+                    exists = true;
+                    break;
+                }
+            }
+
+            if(exists) {
+                // VARSA UYARI VER
+                showAlert("Bilgi", srcName + " ve " + dstName + " arasında zaten bağlantı var!");
+            } else {
+                // YOKSA EKLE
+                controller.addEdge(srcName, dstName);
+            }
+        });
 
         Button btnUnlink = new Button("Bağlantı Sil");
         btnUnlink.setId("btnDanger");
@@ -119,58 +164,76 @@ public class Main extends Application {
         btnComm.setMaxWidth(Double.MAX_VALUE); btnComm.setId("btnSecondary");
         btnComm.setOnAction(e -> controller.runConnectedComponents());
 
-        // --- BÖLÜM 4: SİSTEM & TEST ---
+        // --- BÖLÜM 4: SİSTEM & VERİ ---
         Label lblSec4 = new Label("Sistem & Veri");
         lblSec4.getStyleClass().add("section-label");
 
         HBox fileBox = new HBox(5);
-        Button btnSave = new Button("Kaydet"); btnSave.setMaxWidth(Double.MAX_VALUE); btnSave.setId("btnSecondary");
-        Button btnLoad = new Button("Yükle"); btnLoad.setMaxWidth(Double.MAX_VALUE); btnLoad.setId("btnSecondary");
-        Button btnSnapshot = new Button("Görüntüyü İndir");
+        Button btnSave = new Button("Kaydet");
+        btnSave.setMaxWidth(Double.MAX_VALUE);
+        btnSave.setId("btnSecondary");
+
+        Button btnLoad = new Button("Yükle");
+        btnLoad.setMaxWidth(Double.MAX_VALUE);
+        btnLoad.setId("btnSecondary");
+
+        // --- GÖRÜNTÜYÜ İNDİR BUTONU ---
+        Button btnSnapshot = new Button("Görüntüyü Farklı Kaydet");
         btnSnapshot.setId("btnSecondary");
         btnSnapshot.setMaxWidth(Double.MAX_VALUE);
-        // Geminiden yardım alındı bu kısımda
+
         btnSnapshot.setOnAction(e -> {
-            // 1. o anki görüntüsünü yakala
-            WritableImage image = graphView.snapshot(new SnapshotParameters(), null);
+            FileChooser fileChooser = new FileChooser();
+            fileChooser.setTitle("Grafiği Resim Olarak Kaydet");
+            fileChooser.getExtensionFilters().add(new FileChooser.ExtensionFilter("PNG Dosyası", "*.png"));
+            fileChooser.setInitialFileName("grafik_analiz_" + System.currentTimeMillis() + ".png");
 
-            // 2. Hedef Klasörü Belirle (docs/screenshots)
-            String folderPath = "docs" + File.separator + "screenshots";
-            File directory = new File(folderPath);
+            File file = fileChooser.showSaveDialog(primaryStage);
 
-            // 3. Eğer klasör yoksa OLUŞTUR (Güvenlik Önlemi)
-            if (!directory.exists()) {
-                directory.mkdirs();
-            }
+            if (file != null) {
+                try {
+                    SnapshotParameters params = new SnapshotParameters();
+                    params.setFill(Color.WHITE);
+                    params.setTransform(Transform.scale(2, 2));
 
-            // 4. Dosya ismini ve yolunu ayarla
-            File file = new File(directory, "graph_export_" + System.currentTimeMillis() + ".png");
+                    WritableImage image = graphView.snapshot(params, null);
+                    ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
 
-            try {
-                // 5. Dosyayı diske yaz
-                ImageIO.write(SwingFXUtils.fromFXImage(image, null), "png", file);
+                    Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                    alert.setTitle("Başarılı");
+                    alert.setHeaderText("Kaydedildi!");
+                    alert.setContentText("Resim şuraya kaydedildi:\n" + file.getAbsolutePath());
+                    alert.showAndWait();
 
-                // 6. Kullanıcıya haber ver
-                Alert alert = new Alert(Alert.AlertType.INFORMATION);
-                alert.setTitle("Başarılı");
-                alert.setHeaderText("Görüntü Kaydedildi!");
-                alert.setContentText("Dosya şu konuma kaydedildi:\n" + file.getAbsolutePath());
-                alert.showAndWait();
-
-            } catch (IOException ex) {
-                Alert alert = new Alert(Alert.AlertType.ERROR);
-                alert.setTitle("Hata");
-                alert.setHeaderText("Kaydedilemedi");
-                alert.setContentText(ex.getMessage());
-                alert.showAndWait();
+                } catch (IOException ex) {
+                    showAlert("Hata", "Kaydedilemedi: " + ex.getMessage());
+                }
             }
         });
 
         HBox.setHgrow(btnSave, Priority.ALWAYS); HBox.setHgrow(btnLoad, Priority.ALWAYS);
         fileBox.getChildren().addAll(btnSave, btnLoad);
-        HBox snapshotBox = new HBox(btnSnapshot);
 
-        btnSave.setOnAction(e -> dataManager.saveGraph(graph, "."));
+        // --- KAYDET BUTONU (CSV) ---
+        btnSave.setOnAction(e -> {
+            System.out.println("💾 Kaydet butonuna basıldı...");
+            try {
+                if (dataManager == null) {
+                    showAlert("Kritik Hata", "DataManager bulunamadı!"); return;
+                }
+                dataManager.saveGraph(graph, ".");
+
+                Alert alert = new Alert(Alert.AlertType.INFORMATION);
+                alert.setTitle("İşlem Başarılı");
+                alert.setHeaderText("Kayıt Tamamlandı");
+                alert.setContentText("Veriler 'nodes.csv' dosyasına proje klasörüne kaydedildi.");
+                alert.showAndWait();
+            } catch (Exception ex) {
+                ex.printStackTrace();
+                showAlert("Kayıt Hatası", "Hata Detayı: " + ex.getMessage());
+            }
+        });
+
         btnLoad.setOnAction(e -> {
             graph = dataManager.loadGraph(".");
             controller = new GraphController(graph, graphView);
@@ -223,7 +286,6 @@ public class Main extends Application {
 
         Scene scene = new Scene(root, 1100, 750);
 
-        // CSS Yükleme
         try {
             scene.getStylesheets().add(Objects.requireNonNull(getClass().getResource("/style.css")).toExternalForm());
         } catch (Exception e) {
